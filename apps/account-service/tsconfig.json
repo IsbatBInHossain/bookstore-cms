@@ -1,0 +1,32 @@
+{
+  // Visit https://aka.ms/tsconfig to read more about this file
+  "compilerOptions": {
+    // File Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Environment Settings
+    // See also https://aka.ms/tsconfig/module
+    "module": "nodenext",
+    "target": "es2022",
+    // For nodejs:
+    "lib": ["esnext"],
+    "types": ["node"],
+
+    // ---- Stricter Type-Checking (Excellent Defaults) ----
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // ---- Module Interop & Other Settings ----
+    "esModuleInterop": true, // Recommended for compatibility
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // ---- Output ----
+    "sourceMap": true // Essential for debugging
+  },
+  "include": ["src/**/*"], // Tell TSC to only compile files within the 'src' directory
+  "exclude": ["node_modules"]
+}
