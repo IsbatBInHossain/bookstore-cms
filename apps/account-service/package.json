@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.14.0",
+    "@repo/logger": "workspace:*",
     "express": "^5.1.0",
     "passport": "^0.7.0"
   },
