@@ -1,20 +1,15 @@
-import express from 'express';
-import type { Express, Request, Response } from 'express';
+import dotenv from 'dotenv';
+import { createServer, logger } from './core/server.js';
+import { type Express } from 'express';
 
-const app: Express = express();
+dotenv.config();
+const app: Express = createServer();
 const port = process.env.PORT || 3001;
-
-app.get('/', (req: Request, res: Response) => {
-  res.json({
-    message: 'Hello from the Account Service!',
-    service: 'account-service',
-  });
-});
 
 const main = async () => {
   try {
     app.listen(port, () => {
-      console.log(
+      logger.info(
         `[account-service]: Server is running at http://localhost:${port}`
       );
     });
