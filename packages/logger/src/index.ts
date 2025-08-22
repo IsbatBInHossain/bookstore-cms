@@ -14,16 +14,16 @@ export function createLogger(options: LoggerOptions) {
   }
 
   // Define the transport based on the environment
-  const transport =
+  const transportConfig =
     process.env.NODE_ENV === 'development'
-      ? pino.transport({
+      ? {
           target: 'pino-pretty',
           options: {
             translateTime: 'SYS:standard',
             colorize: true,
             ignore: 'pid,hostname',
           },
-        })
+        }
       : undefined;
 
   // Create and return the logger instance
@@ -33,7 +33,7 @@ export function createLogger(options: LoggerOptions) {
       service: service,
     },
     level: process.env.LOG_LEVEL || 'info',
-    ...transport,
+    transport: transportConfig,
   });
 
   return logger;
