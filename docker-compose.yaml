@@ -23,6 +23,9 @@ services:
       - '3001:3001'
     environment:
       - DATABASE_URL=${DATABASE_URL_DOCKER}
+      - NODE_ENV=production
+    env_file:
+      - ./apps/account-service/.env
     depends_on:
       - postgres-db # Start the database before starting account service
 

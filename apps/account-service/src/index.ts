@@ -1,5 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config({ quiet: true });
 import { createServer, logger } from './core/server.js';
 import { type Express } from 'express';
 
