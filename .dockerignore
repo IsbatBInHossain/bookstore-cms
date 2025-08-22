@@ -1,0 +1,24 @@
+# Git
+.git
+.gitignore
+
+# Node modules
+node_modules
+apps/**/node_modules
+packages/**/node_modules
+
+# Turbo cache
+.turbo
+
+# IDE and OS files
+.vscode
+.idea
+.DS_Store
+
+# Env files
+.env
+.env.*
+!/.env.example
+
+# Docker files
+docker-compose.yml
