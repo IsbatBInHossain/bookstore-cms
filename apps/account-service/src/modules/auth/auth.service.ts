@@ -2,6 +2,7 @@ import type { registerSchemaType } from './auth.validation.js';
 import { prisma } from '../../core/prisma-client.js';
 import { logger } from '../../core/server.js';
 import { hashPassword } from '../../shared/utils/password.js';
+import { ApiError } from '../../core/api-error.js';
 
 export const registerUser = async (userData: registerSchemaType) => {
   const existingUser = await prisma.user.findUnique({
@@ -11,39 +12,38 @@ export const registerUser = async (userData: registerSchemaType) => {
   });
 
   if (existingUser) {
-    logger.warn('Invalid user. User with given email already exits.');
-    throw new Error('User with given email already exits.');
+    logger.warn('Invalid user. A user with given email already exits.');
+    throw new ApiError(409, 'A user with this email already exists.');
   }
 
   const hash = await hashPassword(userData.password);
 
-  try {
-    prisma.$transaction(async tx => {
-      const { email, firstName, lastName, phone } = userData;
-      const user = await tx.user.create({
-        data: {
-          email,
-          passwordHash: hash,
-          roleId: 'CUSTOMER',
-        },
-      });
-
-      const profile = tx.userProfile.create({
-        data: {
-          firstName,
-          lastName: lastName ?? null,
-          phone: phone ?? null,
-          userId: user.id,
-        },
-      });
-      const { passwordHash, ...safeUser } = user;
-      return {
-        ...safeUser,
-        profile: { ...profile },
-      };
+  const newUser = prisma.$transaction(async tx => {
+    const { email, firstName, lastName, phone } = userData;
+    const user = await tx.user.create({
+      data: {
+        email,
+        passwordHash: hash,
+        // TODO: Replace this hardcoded string once we have database seeding
+        roleId: 'CUSTOMER',
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
     });
-  } catch (err) {
-    logger.warn('Failed to register user.');
-    throw new Error('Failed to register user.');
-  }
+
+    const profile = await tx.userProfile.create({
+      data: {
+        firstName,
+        lastName: lastName ?? null,
+        phone: phone ?? null,
+        userId: user.id,
+      },
+    });
+    return { ...user, profile };
+  });
+
+  return newUser;
 };
