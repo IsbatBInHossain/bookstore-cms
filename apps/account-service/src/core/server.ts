@@ -1,6 +1,7 @@
 import { createLogger } from '@repo/logger';
 import type { Express, Request, Response } from 'express';
 import express from 'express';
+import helmet from 'helmet';
 
 export const logger = createLogger({ service: 'account-service' });
 
@@ -8,6 +9,7 @@ export const createServer = (): Express => {
   const app: Express = express();
 
   // Standard middleware
+  app.use(helmet());
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
