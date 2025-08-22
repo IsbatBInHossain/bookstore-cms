@@ -18,6 +18,7 @@
   "dependencies": {
     "@prisma/client": "^6.14.0",
     "@repo/logger": "workspace:*",
+    "argon2": "^0.44.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "passport": "^0.7.0",
