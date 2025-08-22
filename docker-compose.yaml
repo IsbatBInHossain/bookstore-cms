@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - '5432:5432' # Map port 5432 on your machine to port 5432 in the container
+      - '5400:5432' # Map port 5400 on machine to port 5432 in the container
 
   # Our Account Service, built from its own Dockerfile
   account-service:
