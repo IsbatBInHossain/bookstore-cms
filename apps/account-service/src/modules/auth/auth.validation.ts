@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { email } from 'zod/v4';
 
+// Register
 export const registerSchema = z.object({
   body: z
     .object({
@@ -22,6 +22,10 @@ export const registerSchema = z.object({
     }),
 });
 
+export type registerSchemaType = z.infer<typeof registerSchema>;
+export type registerSchemaDataType = z.infer<typeof registerSchema>['body'];
+
+// Login
 export const loginSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email format'),
@@ -29,8 +33,12 @@ export const loginSchema = z.object({
   }),
 });
 
-// Types
-export type registerSchemaType = z.infer<typeof registerSchema>;
-export type registerSchemaDataType = z.infer<typeof registerSchema>['body'];
 export type loginSchemaType = z.infer<typeof loginSchema>;
 export type loginSchemaDataType = z.infer<typeof loginSchema>['body'];
+
+// Refresh token
+export const refreshTokenSchema = z.object({
+  body: z.object({
+    refreshToken: z.string(),
+  }),
+});

@@ -49,6 +49,19 @@ export const verifyAccessToken = (token: string): UserPayload | null => {
 };
 
 /**
+ * Verifies an refresh token and returns the decoded payload.
+ */
+export const verifyRefreshToken = (token: string): UserPayload | null => {
+  try {
+    const refreshSecret = process.env.JWT_REFRESH_SECRET;
+    if (!refreshSecret) return null;
+    return jwt.verify(token, refreshSecret) as UserPayload;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Hashes a refresh token before saving in DB.
  */
 export async function hashRefreshToken(token: string): Promise<string> {
