@@ -156,7 +156,7 @@ const refreshAccessToken = async (refreshToken: string) => {
 
   let tokenMatched = false;
   for (let token of currentTokens) {
-    if (await verifyRefreshTokenHash(token.tokenHash, refreshToken)) {
+    if (await verifyRefreshTokenHash(refreshToken, token.tokenHash)) {
       tokenMatched = true;
       break;
     }
