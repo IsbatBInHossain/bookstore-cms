@@ -4,7 +4,7 @@ import { ApiError } from '../../core/api-error.js';
 import {
   sendErrorResponse,
   sendSuccessResponse,
-} from '../../shared/handlers/responseHandlers.js';
+} from '../../shared/handlers/response.handler.js';
 
 const registerUser = async (
   req: Request,

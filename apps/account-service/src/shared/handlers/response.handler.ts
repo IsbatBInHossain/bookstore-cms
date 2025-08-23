@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import { logger } from '../../core/server.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Sends a standardized JSON success response to the client.
