@@ -4,6 +4,7 @@ import helmet from 'helmet';
 
 // Routers
 import authRouter from '../modules/auth/auth.routes.js';
+import usersRouter from '../modules/users/users.routes.js';
 import { sendSuccessResponse } from '../shared/handlers/response.handler.js';
 import { ApiError } from './api-error.js';
 import { errorHandler } from '../shared/middleware/errorHandler.middleware.js';
@@ -35,6 +36,7 @@ export const createServer = (): Express => {
 
   // Mount the routers
   app.use(`${API_BASE}/auth`, authRouter);
+  app.use(`${API_BASE}/users`, usersRouter);
 
   // Catch all route
   app.use((req, res, next) => {
