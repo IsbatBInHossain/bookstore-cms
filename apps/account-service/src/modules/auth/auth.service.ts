@@ -6,6 +6,7 @@ import { prisma } from '../../core/prisma-client.js';
 import { hashPassword, verifyPassword } from '../../shared/utils/password.js';
 import { ApiError } from '../../core/api-error.js';
 import { logger } from '../../shared/utils/logger.js';
+import { generateTokens, hashRefreshToken } from '../../shared/utils/jwt.js';
 
 const registerUser = async (userData: registerSchemaDataType) => {
   const existingUser = await prisma.user.findUnique({
@@ -73,7 +74,32 @@ const loginUser = async (userData: loginSchemaDataType) => {
     throw new ApiError(401, 'Invalid email or password');
   }
 
-  // TODO: Create jwt token for user and send it
+  const tokens = generateTokens({ email: user.email, id: user.id });
+  const hashedRefreshToken = await hashRefreshToken(tokens.refreshToken);
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await prisma.$transaction(async tx => {
+    // Delete all old refresh tokens for this user
+    await tx.refreshToken.deleteMany({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    // Store new refresh token
+    await tx.refreshToken.create({
+      data: {
+        tokenHash: hashedRefreshToken,
+        expiresAt,
+        userId: user.id,
+      },
+    });
+  });
+
+  const { passwordHash, ...safeUser } = user;
+
+  return { safeUser, ...tokens };
 };
 
 export const authService = {
