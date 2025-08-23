@@ -3,6 +3,13 @@ import type { Express, Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
 
+// Routers
+import authRouter from '../modules/auth/auth.routes.js';
+
+// Constants
+const API_BASE = '/account-service/api/v1';
+
+// Global logger
 export const logger = createLogger({ service: 'account-service' });
 
 export const createServer = (): Express => {
@@ -25,6 +32,9 @@ export const createServer = (): Express => {
       service: 'account-service',
     });
   });
+
+  // Mount the routers
+  app.use(`${API_BASE}/auth`, authRouter);
 
   return app;
 };
