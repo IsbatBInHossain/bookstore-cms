@@ -25,7 +25,7 @@ const registerUser = async (userData: registerSchemaDataType) => {
         email,
         passwordHash: hash,
         // TODO: Replace this hardcoded string once we have database seeding
-        roleId: 'CUSTOMER',
+        roleId: 'cmeo156340001uzu8fcw4kf2l',
       },
       select: {
         id: true,
