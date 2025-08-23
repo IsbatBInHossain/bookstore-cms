@@ -10,23 +10,25 @@ export interface UserPayload {
   email: string;
 }
 
-const { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET } = process.env;
-
 /**
  * Generates an access and refresh token for a given user payload.
  */
 export const generateTokens = (payload: UserPayload) => {
-  if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+  // Access process.env here for safety
+  const accessSecret = process.env.JWT_ACCESS_SECRET;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+  if (!accessSecret || !refreshSecret) {
     throw new Error(
       'JWT secret keys are not defined in environment variables.'
     );
   }
 
-  const accessToken = jwt.sign(payload, JWT_ACCESS_SECRET, {
+  const accessToken = jwt.sign(payload, accessSecret, {
     expiresIn: JWT_ACCESS_EXPIRES_IN,
   });
 
-  const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
+  const refreshToken = jwt.sign(payload, refreshSecret, {
     expiresIn: JWT_REFRESH_EXPIRES_IN,
   });
 
@@ -38,7 +40,9 @@ export const generateTokens = (payload: UserPayload) => {
  */
 export const verifyAccessToken = (token: string): UserPayload | null => {
   try {
-    return jwt.verify(token, JWT_ACCESS_SECRET!) as UserPayload;
+    const accessSecret = process.env.JWT_ACCESS_SECRET;
+    if (!accessSecret) return null;
+    return jwt.verify(token, accessSecret) as UserPayload;
   } catch {
     return null;
   }
