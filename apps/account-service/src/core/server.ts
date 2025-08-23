@@ -1,4 +1,3 @@
-import { createLogger } from '@repo/logger';
 import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
@@ -8,16 +7,13 @@ import authRouter from '../modules/auth/auth.routes.js';
 import {
   sendErrorResponse,
   sendSuccessResponse,
-} from '../shared/handlers/responseHandlers.js';
+} from '../shared/handlers/response.handler.js';
 import { ApiError } from './api-error.js';
 import { errorHandler } from '../shared/middleware/errorHandler.middleware.js';
+import { logger } from '../shared/utils/logger.js';
 
 // Constants
 const API_BASE = '/api/v1';
-const NODE_ENV = process.env.NODE_ENV || 'development'; //!Change on production
-
-// Global logger
-export const logger = createLogger({ service: 'account-service' });
 
 export const createServer = (): Express => {
   const app: Express = express();

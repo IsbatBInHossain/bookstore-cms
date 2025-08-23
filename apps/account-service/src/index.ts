@@ -1,5 +1,6 @@
-import { createServer, logger } from './core/server.js';
+import { createServer } from './core/server.js';
 import { type Express } from 'express';
+import { logger } from './shared/utils/logger.js';
 
 const app: Express = createServer();
 const port = process.env.PORT || 3001;

@@ -1,7 +1,7 @@
 import { ZodSchema, ZodError } from 'zod';
 import type { Response, Request, NextFunction } from 'express';
-import { logger } from '../../core/server.js';
-import { sendErrorResponse } from '../handlers/responseHandlers.js';
+import { sendErrorResponse } from '../handlers/response.handler.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Middleware to validate incoming request data using Zod schema

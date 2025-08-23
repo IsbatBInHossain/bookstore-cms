@@ -1,7 +1,7 @@
 import { ApiError } from '../../core/api-error.js';
 import type { Request, Response, NextFunction } from 'express';
-import { sendErrorResponse } from '../handlers/responseHandlers.js';
-import { logger } from '../../core/server.js';
+import { sendErrorResponse } from '../handlers/response.handler.js';
+import { logger } from '../utils/logger.js';
 
 export const errorHandler = (
   err: unknown | ApiError,
