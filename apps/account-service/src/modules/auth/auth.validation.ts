@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { email } from 'zod/v4';
 
 export const registerSchema = z.object({
   body: z
@@ -21,5 +22,15 @@ export const registerSchema = z.object({
     }),
 });
 
+export const loginSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(6, 'Password cannot be less than 6 characters'),
+  }),
+});
+
+// Types
 export type registerSchemaType = z.infer<typeof registerSchema>;
 export type registerSchemaDataType = z.infer<typeof registerSchema>['body'];
+export type loginSchemaType = z.infer<typeof loginSchema>;
+export type loginSchemaDataType = z.infer<typeof loginSchema>['body'];
