@@ -1,6 +1,9 @@
-import type { registerSchemaDataType } from './auth.validation.js';
+import type {
+  loginSchemaDataType,
+  registerSchemaDataType,
+} from './auth.validation.js';
 import { prisma } from '../../core/prisma-client.js';
-import { hashPassword } from '../../shared/utils/password.js';
+import { hashPassword, verifyPassword } from '../../shared/utils/password.js';
 import { ApiError } from '../../core/api-error.js';
 import { logger } from '../../shared/utils/logger.js';
 
@@ -48,6 +51,36 @@ const registerUser = async (userData: registerSchemaDataType) => {
   return newUser;
 };
 
+const loginUser = async (userData: loginSchemaDataType) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      email: userData.email,
+    },
+    include: {
+      profile: true,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
+
+  const isPasswordValid = await verifyPassword(
+    user.passwordHash,
+    userData.password
+  );
+  if (!isPasswordValid) {
+    throw new ApiError(401, 'Invalid email or password');
+  }
+
+  // TODO: Create jwt token for user
+
+  const { passwordHash, ...safeUserData } = user;
+
+  return safeUserData;
+};
+
 export const authService = {
   registerUser,
+  loginUser,
 };
