@@ -122,56 +122,61 @@ const loginUser = async (userData: loginSchemaDataType) => {
 };
 
 /**
- * Refreshes access and refresh tokens using a valid refresh token
+ * Refreshes an access token using a valid refresh token.
+ * Implements refresh token rotation for enhanced security.
  *
- * @param refreshToken - The refresh token string used to generate new tokens
- * @returns Promise that resolves to an object containing new access and refresh tokens
- * @throws {ApiError} 401 - If the refresh token is invalid, expired, or not found
+ * @param providedRefreshToken - The refresh token string from the client.
+ * @returns A promise that resolves to an object containing the new accessToken and refreshToken.
+ * @throws {ApiError} 401 - If the refresh token is invalid, expired, or has already been used.
  */
-const refreshAccessToken = async (refreshToken: string) => {
-  const user = verifyRefreshToken(refreshToken);
-  if (!user) {
-    throw new ApiError(401, 'Invalid credentials');
+const refreshAccessToken = async (providedRefreshToken: string) => {
+  // Verify the JWT signature and expiry
+  const decodedPayload = verifyRefreshToken(providedRefreshToken);
+  if (!decodedPayload) {
+    throw new ApiError(401, 'Invalid or expired refresh token.');
   }
 
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      email: user.email,
-    },
+  // Find the ONE active refresh token associated with the user.
+  const storedToken = await prisma.refreshToken.findFirst({
+    where: { userId: decodedPayload.id },
   });
 
-  if (!existingUser) {
-    throw new ApiError(404, 'User not found');
+  if (!storedToken) {
+    throw new ApiError(401, 'Refresh token not found or has been invalidated.');
   }
 
-  const currentTokens = await prisma.refreshToken.findMany({
-    where: {
-      userId: existingUser.id,
-    },
-  });
+  // Compare the provided token with the hashed token from the database.
+  const isTokenValid = await verifyRefreshTokenHash(
+    providedRefreshToken,
+    storedToken.tokenHash
+  );
 
-  if (currentTokens.length === 0) {
-    throw new ApiError(401, 'Invalid credentials');
+  if (!isTokenValid) {
+    // TODO: Invalid all session
+    throw new ApiError(401, 'Invalid refresh token.');
   }
 
-  let tokenMatched = false;
-  for (let token of currentTokens) {
-    if (await verifyRefreshTokenHash(refreshToken, token.tokenHash)) {
-      tokenMatched = true;
-      break;
-    }
-  }
-
-  if (!tokenMatched) {
-    throw new ApiError(401, 'Invalid credentials');
-  }
-
+  // --- REFRESH TOKEN ROTATION ---
   const newTokens = generateTokens({
-    email: existingUser.email,
-    id: existingUser.id,
+    email: decodedPayload.email,
+    id: decodedPayload.id,
+  });
+  const newHashedRefreshToken = await hashRefreshToken(newTokens.refreshToken);
+
+  const refreshTokenExpiresMs = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const newExpiresAt = new Date(Date.now() + refreshTokenExpiresMs);
+
+  // Update the existing token record
+  await prisma.refreshToken.update({
+    where: { id: storedToken.id },
+    data: {
+      tokenHash: newHashedRefreshToken,
+      expiresAt: newExpiresAt,
+    },
   });
 
-  return newTokens.accessToken;
+  // Return the new pair of tokens to the client.
+  return newTokens;
 };
 
 export const authService = {
