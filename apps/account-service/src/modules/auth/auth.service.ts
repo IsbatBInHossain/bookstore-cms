@@ -1,10 +1,10 @@
-import type { registerSchemaType } from './auth.validation.js';
+import type { registerSchemaDataType } from './auth.validation.js';
 import { prisma } from '../../core/prisma-client.js';
 import { logger } from '../../core/server.js';
 import { hashPassword } from '../../shared/utils/password.js';
 import { ApiError } from '../../core/api-error.js';
 
-const registerUser = async (userData: registerSchemaType) => {
+const registerUser = async (userData: registerSchemaDataType) => {
   const existingUser = await prisma.user.findUnique({
     where: {
       email: userData.email,

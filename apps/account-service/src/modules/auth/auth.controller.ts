@@ -15,7 +15,7 @@ const registerUser = async (
   const userData = req.body as registerSchemaType;
 
   try {
-    const user = await authService.registerUser(userData);
+    const user = await authService.registerUser(userData.body);
     sendSuccessResponse(res, 201, 'Succesfully created user', user);
   } catch (error) {
     if (error instanceof ApiError) {
