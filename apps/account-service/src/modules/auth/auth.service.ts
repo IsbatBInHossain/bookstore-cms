@@ -9,8 +9,17 @@ import { logger } from '../../shared/utils/logger.js';
 import {
   generateTokens,
   hashRefreshToken,
+  verifyRefreshToken,
+  verifyRefreshTokenHash,
 } from '../../shared/utils/tokens.util.js';
 
+/**
+ * Registers a new user in the system
+ *
+ * @param userData - The user registration data containing email, password, and profile information
+ * @returns Promise that resolves to the created user object with profile, excluding sensitive data
+ * @throws {ApiError} 409 - If a user with the provided email already exists
+ */
 const registerUser = async (userData: registerSchemaDataType) => {
   const existingUser = await prisma.user.findUnique({
     where: {
@@ -55,6 +64,13 @@ const registerUser = async (userData: registerSchemaDataType) => {
   return newUser;
 };
 
+/**
+ * Authenticates a user and generates access/refresh tokens
+ *
+ * @param userData - The user login credentials containing email and password
+ * @returns Promise that resolves to an object containing the user data (without password) and authentication tokens
+ * @throws {ApiError} 401 - If the email doesn't exist or password is incorrect
+ */
 const loginUser = async (userData: loginSchemaDataType) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -105,7 +121,61 @@ const loginUser = async (userData: loginSchemaDataType) => {
   return { safeUser, ...tokens };
 };
 
+/**
+ * Refreshes access and refresh tokens using a valid refresh token
+ *
+ * @param refreshToken - The refresh token string used to generate new tokens
+ * @returns Promise that resolves to an object containing new access and refresh tokens
+ * @throws {ApiError} 401 - If the refresh token is invalid, expired, or not found
+ */
+const refreshAccessToken = async (refreshToken: string) => {
+  const user = verifyRefreshToken(refreshToken);
+  if (!user) {
+    throw new ApiError(401, 'Invalid credentials');
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      email: user.email,
+    },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const currentTokens = await prisma.refreshToken.findMany({
+    where: {
+      userId: existingUser.id,
+    },
+  });
+
+  if (currentTokens.length === 0) {
+    throw new ApiError(401, 'Invalid credentials');
+  }
+
+  let tokenMatched = false;
+  for (let token of currentTokens) {
+    if (await verifyRefreshTokenHash(token.tokenHash, refreshToken)) {
+      tokenMatched = true;
+      break;
+    }
+  }
+
+  if (!tokenMatched) {
+    throw new ApiError(401, 'Invalid credentials');
+  }
+
+  const newTokens = generateTokens({
+    email: existingUser.email,
+    id: existingUser.id,
+  });
+
+  return newTokens.accessToken;
+};
+
 export const authService = {
   registerUser,
   loginUser,
+  refreshAccessToken,
 };
