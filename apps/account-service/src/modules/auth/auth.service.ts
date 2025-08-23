@@ -73,11 +73,7 @@ const loginUser = async (userData: loginSchemaDataType) => {
     throw new ApiError(401, 'Invalid email or password');
   }
 
-  // TODO: Create jwt token for user
-
-  const { passwordHash, ...safeUserData } = user;
-
-  return safeUserData;
+  // TODO: Create jwt token for user and send it
 };
 
 export const authService = {
