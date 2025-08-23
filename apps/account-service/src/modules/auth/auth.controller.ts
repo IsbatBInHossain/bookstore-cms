@@ -2,8 +2,12 @@ import type { NextFunction, Request, Response } from 'express';
 import type { registerSchemaType } from './auth.validation.js';
 import { authService } from './auth.service.js';
 import { ApiError } from '../../core/api-error.js';
+import {
+  sendErrorResponse,
+  sendSuccessResponse,
+} from '../../shared/handlers/responseHandlers.js';
 
-export const registerUserController = async (
+const registerUser = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -12,18 +16,15 @@ export const registerUserController = async (
 
   try {
     const user = await authService.registerUser(userData);
-    res.status(201).json({
-      staus: 'Success',
-      message: 'Created new user',
-      data: user,
-    });
+    sendSuccessResponse(res, 201, 'Succesfully created user', user);
   } catch (error) {
     if (error instanceof ApiError) {
-      res.status(error.statusCode).json({
-        status: 'Failed',
-        message: error.message,
-      });
+      sendErrorResponse(res, error.statusCode, error.message, error);
     }
     next(error);
   }
+};
+
+export const authController = {
+  registerUser,
 };
