@@ -3,6 +3,7 @@ import {
   JWT_ACCESS_EXPIRES_IN,
   JWT_REFRESH_EXPIRES_IN,
 } from '../constants/index.js';
+import argon2 from 'argon2';
 
 export interface UserPayload {
   id: string;
@@ -44,12 +45,18 @@ export const verifyAccessToken = (token: string): UserPayload | null => {
 };
 
 /**
- * Verifies a refresh token and returns the decoded payload.
+ * Hashes a refresh token before saving in DB.
  */
-export const verifyRefreshToken = (token: string): UserPayload | null => {
-  try {
-    return jwt.verify(token, JWT_REFRESH_SECRET!) as UserPayload;
-  } catch {
-    return null;
-  }
-};
+export async function hashRefreshToken(token: string): Promise<string> {
+  return argon2.hash(token);
+}
+
+/**
+ * Verifies a refresh token against stored hash.
+ */
+export async function verifyRefreshTokenHash(
+  token: string,
+  hash: string
+): Promise<boolean> {
+  return argon2.verify(hash, token);
+}
