@@ -18,14 +18,17 @@ const main = async () => {
     { name: 'ADMIN', description: 'Has full access to the system.' },
   ];
 
-  roles.forEach(async role => {
-    await prisma.role.create({
-      data: {
+  for (const role of roles) {
+    await prisma.role.upsert({
+      where: { name: role.name }, // Check if a role with this name exists
+      update: {}, // If it exists, do nothing
+      create: {
         name: role.name,
         description: role.description,
       },
     });
-  });
+    logger.info(`Upserted role: ${role.name}`);
+  }
 
   logger.info('Database seeding complete');
 };
