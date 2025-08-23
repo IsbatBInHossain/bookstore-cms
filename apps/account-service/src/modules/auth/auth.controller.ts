@@ -8,8 +8,8 @@ const registerUser = async (req: Request, res: Response) => {
 };
 
 const loginUser = async (req: Request, res: Response) => {
-  await authService.loginUser(req.body);
-  return sendSuccessResponse(res, 200, 'Log in Successful');
+  const loginPayload = await authService.loginUser(req.body);
+  return sendSuccessResponse(res, 200, 'Log in Successful', loginPayload);
 };
 
 export const authController = {
