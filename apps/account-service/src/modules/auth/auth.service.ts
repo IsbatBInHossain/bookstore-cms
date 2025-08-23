@@ -4,7 +4,7 @@ import { logger } from '../../core/server.js';
 import { hashPassword } from '../../shared/utils/password.js';
 import { ApiError } from '../../core/api-error.js';
 
-export const registerUser = async (userData: registerSchemaType) => {
+const registerUser = async (userData: registerSchemaType) => {
   const existingUser = await prisma.user.findUnique({
     where: {
       email: userData.email,
@@ -46,4 +46,8 @@ export const registerUser = async (userData: registerSchemaType) => {
   });
 
   return newUser;
+};
+
+export const authService = {
+  registerUser,
 };
