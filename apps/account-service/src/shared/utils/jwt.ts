@@ -1,17 +1,55 @@
 import jwt from 'jsonwebtoken';
-import { ApiError } from '../../core/api-error.js';
+import {
+  JWT_ACCESS_EXPIRES_IN,
+  JWT_REFRESH_EXPIRES_IN,
+} from '../constants/index.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '1h';
-
-if (!JWT_SECRET) {
-  throw new ApiError(500, 'Internal Server Error', false);
+export interface UserPayload {
+  id: string;
+  email: string;
 }
 
-export function createJWT(payload: object) {
-  return jwt.sign(payload, JWT_SECRET as string, { expiresIn: JWT_EXPIRES_IN });
-}
+const { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET } = process.env;
 
-export function verifyJWT(token: string) {
-  return jwt.verify(token, JWT_SECRET as string) as any;
-}
+/**
+ * Generates an access and refresh token for a given user payload.
+ */
+export const generateTokens = (payload: UserPayload) => {
+  if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+    throw new Error(
+      'JWT secret keys are not defined in environment variables.'
+    );
+  }
+
+  const accessToken = jwt.sign(payload, JWT_ACCESS_SECRET, {
+    expiresIn: JWT_ACCESS_EXPIRES_IN,
+  });
+
+  const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
+    expiresIn: JWT_REFRESH_EXPIRES_IN,
+  });
+
+  return { accessToken, refreshToken };
+};
+
+/**
+ * Verifies an access token and returns the decoded payload.
+ */
+export const verifyAccessToken = (token: string): UserPayload | null => {
+  try {
+    return jwt.verify(token, JWT_ACCESS_SECRET!) as UserPayload;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Verifies a refresh token and returns the decoded payload.
+ */
+export const verifyRefreshToken = (token: string): UserPayload | null => {
+  try {
+    return jwt.verify(token, JWT_REFRESH_SECRET!) as UserPayload;
+  } catch {
+    return null;
+  }
+};
