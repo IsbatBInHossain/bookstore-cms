@@ -1,15 +1,19 @@
 import { createLogger } from '@repo/logger';
-import type { Express, Request, Response } from 'express';
+import type { Express, NextFunction, Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
 
 // Routers
 import authRouter from '../modules/auth/auth.routes.js';
-import { sendSuccessResponse } from '../shared/handlers/responseHandlers.js';
+import {
+  sendErrorResponse,
+  sendSuccessResponse,
+} from '../shared/handlers/responseHandlers.js';
 import { ApiError } from './api-error.js';
 
 // Constants
 const API_BASE = '/api/v1';
+const NODE_ENV = process.env.NODE_ENV || 'development'; //!Change on production
 
 // Global logger
 export const logger = createLogger({ service: 'account-service' });
@@ -37,6 +41,28 @@ export const createServer = (): Express => {
   app.use((req, res, next) => {
     next(new ApiError(404, 'Given route not found'));
   });
+
+  // Error handling
+  app.use(
+    (
+      err: unknown | ApiError,
+      req: Request,
+      res: Response,
+      next: NextFunction
+    ) => {
+      if (!(err instanceof ApiError)) {
+        const err = new ApiError(500, 'Something went wrong', false);
+        return sendErrorResponse(res, err.statusCode, err.message);
+      } else {
+        if (err?.isOperational) {
+          logger.warn(err);
+        } else {
+          logger.error(err);
+        }
+        return sendErrorResponse(res, err.statusCode, err.message);
+      }
+    }
+  );
 
   return app;
 };
