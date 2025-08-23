@@ -10,6 +10,7 @@ import {
   sendSuccessResponse,
 } from '../shared/handlers/responseHandlers.js';
 import { ApiError } from './api-error.js';
+import { errorHandler } from '../shared/middleware/errorHandler.middleware.js';
 
 // Constants
 const API_BASE = '/api/v1';
@@ -43,26 +44,7 @@ export const createServer = (): Express => {
   });
 
   // Error handling
-  app.use(
-    (
-      err: unknown | ApiError,
-      req: Request,
-      res: Response,
-      next: NextFunction
-    ) => {
-      if (!(err instanceof ApiError)) {
-        const err = new ApiError(500, 'Something went wrong', false);
-        return sendErrorResponse(res, err.statusCode, err.message);
-      } else {
-        if (err?.isOperational) {
-          logger.warn(err);
-        } else {
-          logger.error(err);
-        }
-        return sendErrorResponse(res, err.statusCode, err.message);
-      }
-    }
-  );
+  app.use(errorHandler);
 
   return app;
 };
