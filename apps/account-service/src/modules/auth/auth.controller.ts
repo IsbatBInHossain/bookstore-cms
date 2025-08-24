@@ -9,13 +9,17 @@ const registerUser = async (req: Request, res: Response) => {
 
 const loginUser = async (req: Request, res: Response) => {
   const loginPayload = await authService.loginUser(req.body);
-  return sendSuccessResponse(res, 200, 'Log in Successful', loginPayload);
+  return sendSuccessResponse(res, 200, 'Logged in Successfully', loginPayload);
+};
+
+const logoutUser = async (req: Request, res: Response) => {
+  await authService.logoutUser(req.body.refreshToken);
+  return res.status(204).send();
 };
 
 const refreshTokens = async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-  const newTokens = await authService.refreshTokens(refreshToken);
-  return sendSuccessResponse(res, 200, 'Successfully refreshed access token', {
+  const newTokens = await authService.refreshTokens(req.body.refreshToken);
+  return sendSuccessResponse(res, 200, 'Successfully Refreshed Tokens', {
     ...newTokens,
   });
 };
@@ -23,5 +27,6 @@ const refreshTokens = async (req: Request, res: Response) => {
 export const authController = {
   registerUser,
   loginUser,
+  logoutUser,
   refreshTokens,
 };

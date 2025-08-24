@@ -23,9 +23,15 @@ router.post(
 );
 
 router.post(
+  '/logout',
+  validateRequest(refreshTokenSchema),
+  wrapAsync(authController.logoutUser)
+);
+
+router.post(
   '/refresh',
   validateRequest(refreshTokenSchema),
-  wrapAsync(authController.refreshAccessToken)
+  wrapAsync(authController.refreshTokens)
 );
 
 export default router;
