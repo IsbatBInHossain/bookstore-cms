@@ -122,14 +122,14 @@ const loginUser = async (userData: loginSchemaDataType) => {
 };
 
 /**
- * Refreshes an access token using a valid refresh token.
+ * Refreshes access token and Refresh token using a valid refresh token.
  * Implements refresh token rotation for enhanced security.
  *
  * @param providedRefreshToken - The refresh token string from the client.
  * @returns A promise that resolves to an object containing the new accessToken and refreshToken.
  * @throws {ApiError} 401 - If the refresh token is invalid, expired, or has already been used.
  */
-const refreshAccessToken = async (providedRefreshToken: string) => {
+const refreshTokens = async (providedRefreshToken: string) => {
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
   if (!decodedPayload) {
@@ -182,5 +182,5 @@ const refreshAccessToken = async (providedRefreshToken: string) => {
 export const authService = {
   registerUser,
   loginUser,
-  refreshAccessToken,
+  refreshTokens,
 };

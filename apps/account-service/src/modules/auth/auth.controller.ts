@@ -12,16 +12,16 @@ const loginUser = async (req: Request, res: Response) => {
   return sendSuccessResponse(res, 200, 'Log in Successful', loginPayload);
 };
 
-const refreshAccessToken = async (req: Request, res: Response) => {
+const refreshTokens = async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
-  const newAccessToken = await authService.refreshAccessToken(refreshToken);
+  const newTokens = await authService.refreshTokens(refreshToken);
   return sendSuccessResponse(res, 200, 'Successfully refreshed access token', {
-    accessToken: newAccessToken,
+    ...newTokens,
   });
 };
 
 export const authController = {
   registerUser,
   loginUser,
-  refreshAccessToken,
+  refreshTokens,
 };
