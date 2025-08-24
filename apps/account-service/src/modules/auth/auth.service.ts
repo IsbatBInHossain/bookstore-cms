@@ -122,6 +122,27 @@ const loginUser = async (userData: loginSchemaDataType) => {
 };
 
 /**
+ * Logsout a user and deletes their refresh tokens from db
+ *
+ * @param providedRefreshToken - The refresh token string from the client.
+ * @returns void
+ * @throws {ApiError} 401 - If the refresh token is invalid, expired, or has already been used.
+ */
+const logoutUser = async (providedRefreshToken: string) => {
+  logger.info(`Provide token: ${providedRefreshToken}`);
+  // Verify the JWT signature and expiry
+  const decodedPayload = verifyRefreshToken(providedRefreshToken);
+  if (!decodedPayload) {
+    throw new ApiError(401, 'Invalid or expired refresh token.');
+  }
+
+  // Delete all refreshTokens for the user
+  await prisma.refreshToken.deleteMany({
+    where: { userId: decodedPayload.id },
+  });
+};
+
+/**
  * Refreshes access token and Refresh token using a valid refresh token.
  * Implements refresh token rotation for enhanced security.
  *
@@ -130,6 +151,7 @@ const loginUser = async (userData: loginSchemaDataType) => {
  * @throws {ApiError} 401 - If the refresh token is invalid, expired, or has already been used.
  */
 const refreshTokens = async (providedRefreshToken: string) => {
+  logger.info(`Provide token: ${providedRefreshToken}`);
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
   if (!decodedPayload) {
@@ -182,5 +204,6 @@ const refreshTokens = async (providedRefreshToken: string) => {
 export const authService = {
   registerUser,
   loginUser,
+  logoutUser,
   refreshTokens,
 };
