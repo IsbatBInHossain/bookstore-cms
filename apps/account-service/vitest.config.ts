@@ -9,8 +9,6 @@ export default defineConfig({
     globals: true,
 
     // A long timeout is needed because starting a Docker container
-    // for the first time can take a while (image pulling).
-    // 60 seconds should be more than enough.
     testTimeout: 60000,
     hookTimeout: 60000,
 
