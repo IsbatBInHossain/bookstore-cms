@@ -1,8 +1,9 @@
 import { createServer } from './core/server.js';
 import { type Express } from 'express';
 import { logger } from './shared/utils/logger.js';
+import { prisma } from '../src/core/prisma-client.js';
 
-const app: Express = createServer();
+const app: Express = createServer(prisma);
 const port = process.env.PORT || 3001;
 
 const main = async () => {

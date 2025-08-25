@@ -2,7 +2,6 @@ import type {
   loginSchemaDataType,
   registerSchemaDataType,
 } from './auth.validation.js';
-import { prisma } from '../../core/prisma-client.js';
 import { hashPassword, verifyPassword } from '../../shared/utils/password.js';
 import { ApiError } from '../../core/api-error.js';
 import { logger } from '../../shared/utils/logger.js';
@@ -12,6 +11,7 @@ import {
   verifyRefreshToken,
   verifyRefreshTokenHash,
 } from '../../shared/utils/tokens.util.js';
+import type { PrismaClient } from '../../generated/prisma/index.js';
 
 /**
  * Registers a new user in the system
@@ -20,7 +20,10 @@ import {
  * @returns Promise that resolves to the created user object with profile, excluding sensitive data
  * @throws {ApiError} 409 - If a user with the provided email already exists
  */
-const registerUser = async (userData: registerSchemaDataType) => {
+const registerUser = async (
+  userData: registerSchemaDataType,
+  prisma: PrismaClient
+) => {
   const existingUser = await prisma.user.findUnique({
     where: {
       email: userData.email,
@@ -71,7 +74,10 @@ const registerUser = async (userData: registerSchemaDataType) => {
  * @returns Promise that resolves to an object containing the user data (without password) and authentication tokens
  * @throws {ApiError} 401 - If the email doesn't exist or password is incorrect
  */
-const loginUser = async (userData: loginSchemaDataType) => {
+const loginUser = async (
+  userData: loginSchemaDataType,
+  prisma: PrismaClient
+) => {
   const user = await prisma.user.findUnique({
     where: {
       email: userData.email,
@@ -128,7 +134,10 @@ const loginUser = async (userData: loginSchemaDataType) => {
  * @returns void
  * @throws {ApiError} 401 - If the refresh token is invalid, expired, or has already been used.
  */
-const logoutUser = async (providedRefreshToken: string) => {
+const logoutUser = async (
+  providedRefreshToken: string,
+  prisma: PrismaClient
+) => {
   logger.info(`Provide token: ${providedRefreshToken}`);
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
@@ -150,7 +159,10 @@ const logoutUser = async (providedRefreshToken: string) => {
  * @returns A promise that resolves to an object containing the new accessToken and refreshToken.
  * @throws {ApiError} 401 - If the refresh token is invalid, expired, or has already been used.
  */
-const refreshTokens = async (providedRefreshToken: string) => {
+const refreshTokens = async (
+  providedRefreshToken: string,
+  prisma: PrismaClient
+) => {
   logger.info(`Provide token: ${providedRefreshToken}`);
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
