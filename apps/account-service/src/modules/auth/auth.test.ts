@@ -78,4 +78,31 @@ describe('Authentication API', () => {
       'A user with this email already exists'
     );
   });
+
+  it('should fail with a validation error for mismatched passwords', async () => {
+    // Arrange
+    const mismatchedUserPayload = {
+      email: 'existing.user@example.com',
+      password: 'StrongPassword123!',
+      confirmPassword: 'WrongPassword123!',
+      firstName: 'Another',
+      lastName: 'User',
+    };
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/register')
+      .send(mismatchedUserPayload);
+
+    // Assert
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toContain('Validation failed');
+    expect(response.body.errors).toBeDefined();
+    expect(response.body.errors).toHaveLength(1);
+    expect(response.body.errors[0]).toMatchObject({
+      field: 'body.confirmPassword',
+      message: 'Passwords do not match',
+    });
+  });
 });
