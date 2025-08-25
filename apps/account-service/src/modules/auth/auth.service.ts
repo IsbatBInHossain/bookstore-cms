@@ -37,14 +37,22 @@ const registerUser = async (
 
   const hash = await hashPassword(userData.password);
 
-  const newUser = prisma.$transaction(async tx => {
+  const newUser = await prisma.$transaction(async tx => {
     const { email, firstName, lastName, phone } = userData;
+    const customerRole = await prisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+
+    if (!customerRole) {
+      // This should never happen in our test, but it's good practice.
+      throw new Error('CUSTOMER role not found. Please seed the database.');
+    }
     const user = await tx.user.create({
       data: {
         email,
         passwordHash: hash,
         // TODO: Replace this hardcoded string once we have database seeding
-        roleId: 'cmeo156340001uzu8fcw4kf2l',
+        roleId: customerRole.id,
       },
       select: {
         id: true,

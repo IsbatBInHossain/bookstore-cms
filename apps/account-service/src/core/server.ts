@@ -21,6 +21,8 @@ export const createServer = (prisma: PrismaClient): Express => {
   // Attach prisma to app
   app.locals.prisma = prisma;
 
+  console.log(`DATABASE_URL in app ${process.env.DATABASE_URL}`);
+
   // Standard middleware
   app.use(helmet());
   app.use(express.json());
