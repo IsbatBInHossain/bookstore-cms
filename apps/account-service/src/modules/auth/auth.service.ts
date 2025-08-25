@@ -51,7 +51,6 @@ const registerUser = async (
       data: {
         email,
         passwordHash: hash,
-        // TODO: Replace this hardcoded string once we have database seeding
         roleId: customerRole.id,
       },
       select: {
@@ -132,7 +131,7 @@ const loginUser = async (
 
   const { passwordHash, ...safeUser } = user;
 
-  return { safeUser, ...tokens };
+  return { user: safeUser, tokens };
 };
 
 /**
