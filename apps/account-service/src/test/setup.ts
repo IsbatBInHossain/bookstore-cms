@@ -3,9 +3,10 @@ import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
-import { PrismaClient } from '../generated/prisma/index.js';
+import { PrismaClient } from '../generated/prisma/client.js';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import { seedDatabase } from '../../src/shared/utils/seed.js';
 
 const execAsync = promisify(exec);
 
@@ -14,36 +15,36 @@ export let prisma: PrismaClient;
 
 beforeAll(async () => {
   console.log('Setting up test environment...');
+  process.env.NODE_ENV = 'test';
 
-  // 1. Start container
-  container = await new PostgreSqlContainer('postgres:16-alpine').start();
+  container = await new PostgreSqlContainer('postgres:16-alpine')
+    .withExposedPorts({ container: 5432, host: 15433 })
+    .start();
 
-  // 2. Build DATABASE_URL
   process.env.DATABASE_URL = container.getConnectionUri();
 
-  // 3. Apply migrations
-  console.log('Applying migrations...');
-  await execAsync('pnpm prisma migrate deploy', {
-    env: { ...process.env }, // forward env so DATABASE_URL is available
-  });
+  try {
+    // Apply migrations
+    console.log('Applying migrations...');
+    await execAsync('pnpm prisma migrate deploy', { env: { ...process.env } });
+  } catch (error) {
+    console.error('Failed to generate or apply migrations:', error);
+    // Force exit if migrations fail, because tests are guaranteed to be invalid.
+    process.exit(1);
+  }
 
-  // 4. Seed database
-  console.log('Seeding database...');
-  await execAsync('pnpm prisma db seed', {
-    env: { ...process.env },
-  });
-
-  // 5. Init Prisma client (after schema is in place)
+  // Instantiate prisma client
   prisma = new PrismaClient();
+
+  console.log('Seeding database via direct function call...');
+  await seedDatabase(prisma);
 
   console.log('Test environment ready.');
 });
 
 afterAll(async () => {
   console.log('Tearing down test environment...');
-
   await prisma?.$disconnect();
   await container?.stop();
-
   console.log('Test environment torn down.');
 });
