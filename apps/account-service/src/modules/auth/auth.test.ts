@@ -6,6 +6,7 @@ import { prisma as testPrisma } from '../../test/setup.js';
 
 // This helper will now clean our TEST database
 import '../../test/utils.js';
+import { hashPassword } from '../../shared/utils/password.js';
 
 let app: Express;
 
@@ -42,5 +43,39 @@ describe('Authentication API', () => {
     });
     expect(dbUser).not.toBeNull();
     expect(dbUser?.email).toBe(newUser.email);
+  });
+
+  it('should fail to register if email is already taken', async () => {
+    // Arrange: Create a user in the database FIRST to set up the conflict.
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+    await testPrisma.user.create({
+      data: {
+        email: 'existing.user@example.com',
+        passwordHash: await hashPassword('somepassword'),
+        roleId: customerRole!.id,
+      },
+    });
+
+    const duplicateUserPayload = {
+      email: 'existing.user@example.com', // This email now exists
+      password: 'StrongPassword123!',
+      confirmPassword: 'StrongPassword123!',
+      firstName: 'Another',
+      lastName: 'User',
+    };
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/register')
+      .send(duplicateUserPayload);
+
+    // Assert: HTTP Response
+    expect(response.status).toBe(409);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toContain(
+      'A user with this email already exists'
+    );
   });
 });
