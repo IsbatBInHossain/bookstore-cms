@@ -82,11 +82,11 @@ describe('Authentication API', () => {
   it('should fail with a validation error for mismatched passwords', async () => {
     // Arrange
     const mismatchedUserPayload = {
-      email: 'existing.user@example.com',
+      email: 'validation.test@example.com',
       password: 'StrongPassword123!',
       confirmPassword: 'WrongPassword123!',
-      firstName: 'Another',
-      lastName: 'User',
+      firstName: 'Validation',
+      lastName: 'Test',
     };
 
     // Act
@@ -103,6 +103,59 @@ describe('Authentication API', () => {
     expect(response.body.errors[0]).toMatchObject({
       field: 'body.confirmPassword',
       message: 'Passwords do not match',
+    });
+  });
+
+  it('should log in a registered user successfully and return tokens', async () => {
+    // Arrange: Create a user with profile in the database first
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+    await testPrisma.$transaction(async tx => {
+      const testUser = await tx.user.create({
+        data: {
+          email: 'login.test@example.com',
+          passwordHash: await hashPassword('testpassword'),
+          roleId: customerRole!.id,
+        },
+      });
+
+      await tx.userProfile.create({
+        data: {
+          firstName: 'Login',
+          lastName: 'Test',
+          userId: testUser.id,
+        },
+      });
+    });
+
+    const userDataPayload = {
+      email: 'login.test@example.com',
+      password: 'testpassword',
+    };
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.message).toBe('Logged in Successfully');
+    expect(response.body.data).toMatchObject({
+      user: {
+        id: expect.any(String),
+        email: 'login.test@example.com',
+        profile: {
+          firstName: 'Login',
+          lastName: 'Test',
+        },
+      },
+      tokens: {
+        accessToken: expect.any(String),
+        refreshToken: expect.any(String),
+      },
     });
   });
 });
