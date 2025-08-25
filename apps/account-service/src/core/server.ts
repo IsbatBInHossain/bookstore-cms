@@ -10,12 +10,16 @@ import { ApiError } from './api-error.js';
 import { errorHandler } from '../shared/middleware/errorHandler.middleware.js';
 import passport from 'passport';
 import jwtStrategy from './passport.js';
+import type { PrismaClient } from '../generated/prisma/index.js';
 
 // Constants
 const API_BASE = '/api/v1';
 
-export const createServer = (): Express => {
+export const createServer = (prisma: PrismaClient): Express => {
   const app: Express = express();
+
+  // Attach prisma to app
+  app.locals.prisma = prisma;
 
   // Standard middleware
   app.use(helmet());
