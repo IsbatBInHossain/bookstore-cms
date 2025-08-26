@@ -12,6 +12,12 @@ const getMe = (req: Request, res: Response) => {
   );
 };
 
+const updateMe = (req: Request, res: Response) => {
+  // This is a placeholder for the actual update logic
+  return sendSuccessResponse(res, 200, 'User updated successfully', {});
+};
+
 export const usersController = {
   getMe,
+  updateMe,
 };
