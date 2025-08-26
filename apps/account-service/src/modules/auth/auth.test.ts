@@ -337,4 +337,47 @@ describe('Authentication API', () => {
     expect(response.body.status).toBe('error');
     expect(response.body.message).toBe('Invalid or expired refresh token');
   });
+
+  it('should invalidate the refresh token on logout', async () => {
+    // Arrange: Create and log in a user to get a valid refresh token
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+    let testUser;
+    await testPrisma.$transaction(async tx => {
+      testUser = await tx.user.create({
+        data: {
+          email: 'logout.test@example.com',
+          passwordHash: await hashPassword('logoutpassword'),
+          roleId: customerRole!.id,
+        },
+      });
+
+      await tx.userProfile.create({
+        data: { firstName: 'Logout', lastName: 'Test', userId: testUser.id },
+      });
+    });
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: 'logout.test@example.com',
+      password: 'logoutpassword',
+    });
+
+    const refreshToken = loginResponse.body.data.tokens.refreshToken;
+
+    // Act: Logout to invalidate the refresh token
+    const response = await supertest(app)
+      .post('/api/v1/auth/logout')
+      .send({ refreshToken });
+
+    // Assert
+    expect(response.status).toBe(204);
+
+    // Check the db to see if the token is invalidated
+    const storedToken = await testPrisma.refreshToken.findFirst({
+      where: { userId: testUser!.id },
+    });
+
+    expect(storedToken).toBe(null);
+  });
 });
