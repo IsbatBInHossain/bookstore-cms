@@ -21,8 +21,6 @@ export const createServer = (prisma: PrismaClient): Express => {
   // Attach prisma to app
   app.locals.prisma = prisma;
 
-  // console.log(`DATABASE_URL in app ${process.env.DATABASE_URL}`);
-  // console.log('JWT_ACCESS_SECRET:', process.env.JWT_ACCESS_SECRET);
   // Standard middleware
   app.use(helmet());
   app.use(express.json());
@@ -34,7 +32,7 @@ export const createServer = (prisma: PrismaClient): Express => {
 
   // Health check endpoint
   app.get(`${API_BASE}/health`, (req: Request, res: Response) => {
-    return sendSuccessResponse(res, 200, 'Hello from the Account Service', {
+    return sendSuccessResponse(res, 200, '[account-service]: is healthy', {
       service: 'account-service',
       timestamp: new Date().toISOString(),
     });

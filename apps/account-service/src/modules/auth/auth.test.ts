@@ -4,7 +4,7 @@ import type { Express } from 'express';
 import { createServer } from '../../core/server.js';
 import { prisma as testPrisma } from '../../test/setup.js';
 
-// This helper will now clean our TEST database
+// Helper for cleaning DB between tests
 import '../../test/utils.js';
 import { hashPassword } from '../../shared/utils/password.js';
 
@@ -46,7 +46,7 @@ describe('Authentication API', () => {
   });
 
   it('should fail to register if email is already taken', async () => {
-    // Arrange: Create a user in the database FIRST to set up the conflict.
+    // Arrange: Create a user in the database to set up the conflict.
     const customerRole = await testPrisma.role.findUnique({
       where: { name: 'CUSTOMER' },
     });
