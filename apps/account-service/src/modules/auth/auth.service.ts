@@ -67,6 +67,13 @@ const registerUser = async (
         phone: phone ?? null,
         userId: user.id,
       },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        userId: true,
+      },
     });
     return { ...user, profile };
   });
@@ -89,9 +96,26 @@ const loginUser = async (
     where: {
       email: userData.email,
     },
-    include: {
-      profile: true,
-      role: true,
+    select: {
+      id: true,
+      email: true,
+      passwordHash: true,
+      role: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        },
+      },
+      profile: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          userId: true,
+        },
+      },
     },
   });
 
@@ -130,7 +154,7 @@ const loginUser = async (
     });
   });
 
-  const { passwordHash, roleId, ...safeUser } = user;
+  const { passwordHash, ...safeUser } = user;
 
   return { user: safeUser, tokens };
 };
@@ -146,7 +170,7 @@ const logoutUser = async (
   providedRefreshToken: string,
   prisma: PrismaClient
 ) => {
-  logger.info(`Provide token: ${providedRefreshToken}`);
+  logger.debug(`Provide token: ${providedRefreshToken}`);
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
   if (!decodedPayload) {
@@ -171,7 +195,7 @@ const refreshTokens = async (
   providedRefreshToken: string,
   prisma: PrismaClient
 ) => {
-  logger.info(`Provide token: ${providedRefreshToken}`);
+  logger.debug(`Provide token: ${providedRefreshToken}`);
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
   if (!decodedPayload) {

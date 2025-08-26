@@ -3,8 +3,10 @@ import { createLogger } from '@repo/logger';
 
 const logger = createLogger({ service: 'account-service (prisma)' });
 
-// This is our new, reusable seeding function.
-// It accepts any PrismaClient instance as an argument.
+/*
+ * Seed the database with initial data.
+ * This function can be called in different contexts, such as during application startup or via CLI.
+ */
 export const seedDatabase = async (prisma: PrismaClient) => {
   logger.info('Seeding database with provided Prisma client...');
 

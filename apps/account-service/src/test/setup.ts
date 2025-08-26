@@ -17,7 +17,7 @@ beforeAll(async () => {
   console.log('Setting up test environment...');
   process.env.NODE_ENV = 'test';
 
-  container = await new PostgreSqlContainer('postgres:16-alpine')
+  container = await new PostgreSqlContainer('postgres:17-alpine')
     .withExposedPorts({ container: 5432, host: 15433 })
     .start();
 

@@ -10,8 +10,7 @@ export const authenticate = (
   res: Response,
   next: NextFunction
 ) => {
-  // Use the 'jwt' strategy, and since we are not using cookies, session is false.
-  // Passport will automatically handle the 401 error response if authentication fails.
+  // Use the 'jwt' strategy for authentication with custom callback to handle errors and user info
   passport.authenticate(
     'jwt',
     { session: false },
