@@ -175,7 +175,7 @@ const refreshTokens = async (
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);
   if (!decodedPayload) {
-    throw new ApiError(401, 'Invalid or expired refresh token.');
+    throw new ApiError(401, 'Invalid or expired refresh token');
   }
 
   // Find the ONE active refresh token associated with the user.
@@ -184,7 +184,7 @@ const refreshTokens = async (
   });
 
   if (!storedToken) {
-    throw new ApiError(401, 'Refresh token not found or has been invalidated.');
+    throw new ApiError(401, 'Refresh token not found or has been invalidated');
   }
 
   // Compare the provided token with the hashed token from the database.
@@ -195,7 +195,7 @@ const refreshTokens = async (
 
   if (!isTokenValid) {
     // TODO: Invalid all session
-    throw new ApiError(401, 'Invalid refresh token.');
+    throw new ApiError(401, 'Invalid refresh token');
   }
 
   // --- REFRESH TOKEN ROTATION ---
