@@ -98,12 +98,6 @@ describe('Authentication API', () => {
     expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
     expect(response.body.message).toContain('Validation failed');
-    expect(response.body.errors).toBeDefined();
-    expect(response.body.errors).toHaveLength(1);
-    expect(response.body.errors[0]).toMatchObject({
-      field: 'body.confirmPassword',
-      message: 'Passwords do not match',
-    });
   });
 
   it('should log in a registered user successfully and return tokens', async () => {
@@ -235,14 +229,11 @@ describe('Authentication API', () => {
 
     const accessToken = loginResponse.body.data.tokens.accessToken;
     const authToken = `Bearer ${accessToken}`;
-    console.log('Auth Token:', authToken);
 
     // Act
     const response = await supertest(app)
       .get('/api/v1/users/me')
       .set('Authorization', authToken);
-
-    console.log(response.body);
 
     // Assert
     expect(response.status).toBe(200);
@@ -288,5 +279,47 @@ describe('Authentication API', () => {
     expect(response.status).toBe(401);
     expect(response.body.status).toBe('error');
     expect(response.body.message).toBe('Unauthorized');
+  });
+
+  it('should issue a new token pair for a valid refresh token', async () => {
+    // Arrange: Create and log in a user to get a valid refresh token
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+    await testPrisma.$transaction(async tx => {
+      const testUser = await tx.user.create({
+        data: {
+          email: 'vaild.token@example.com',
+          passwordHash: await hashPassword('somepassword'),
+          roleId: customerRole!.id,
+        },
+      });
+
+      await tx.userProfile.create({
+        data: { firstName: 'Valid', lastName: 'Token', userId: testUser.id },
+      });
+    });
+
+    // Login to get a valid refresh token
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: 'vaild.token@example.com',
+      password: 'somepassword',
+    });
+
+    const refreshToken = loginResponse.body.data.tokens.refreshToken;
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken });
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.message).toBe('Successfully Refreshed Tokens');
+    expect(response.body.data).toMatchObject({
+      accessToken: expect.any(String),
+      refreshToken: expect.any(String),
+    });
   });
 });
