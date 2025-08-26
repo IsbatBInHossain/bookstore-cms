@@ -322,4 +322,19 @@ describe('Authentication API', () => {
       refreshToken: expect.any(String),
     });
   });
+
+  it('should fail to refresh tokens with an invalid refresh token', async () => {
+    // Arrange
+    const invalidRefreshToken = 'Invalid.Refresh.Token.Here';
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken: invalidRefreshToken });
+
+    // Assert
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Invalid or expired refresh token');
+  });
 });
