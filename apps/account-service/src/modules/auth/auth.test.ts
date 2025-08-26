@@ -204,4 +204,57 @@ describe('Authentication API', () => {
     expect(response.body.status).toBe('error');
     expect(response.body.message).toBe('Invalid email or password');
   });
+
+  it('should return user data for a valid access token', async () => {
+    // Arrange: Create and log in a user to get a valid access token
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+    await testPrisma.$transaction(async tx => {
+      const testUser = await tx.user.create({
+        data: {
+          email: 'userprofile.test@example.com',
+          passwordHash: await hashPassword('profilepassword'),
+          roleId: customerRole!.id,
+        },
+      });
+
+      await tx.userProfile.create({
+        data: {
+          firstName: 'UserProfile',
+          lastName: 'Test',
+          userId: testUser.id,
+        },
+      });
+    });
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: 'userprofile.test@example.com',
+      password: 'profilepassword',
+    });
+
+    const accessToken = loginResponse.body.data.tokens.accessToken;
+    const authToken = `Bearer ${accessToken}`;
+    console.log('Auth Token:', authToken);
+
+    // Act
+    const response = await supertest(app)
+      .get('/api/v1/users/me')
+      .set('Authorization', authToken);
+
+    console.log(response.body);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.data).toMatchObject({
+      id: expect.any(String),
+      email: 'userprofile.test@example.com',
+      role: { name: 'CUSTOMER' },
+      profile: {
+        firstName: 'UserProfile',
+        lastName: 'Test',
+      },
+    });
+  });
 });
