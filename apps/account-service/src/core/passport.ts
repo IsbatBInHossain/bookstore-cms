@@ -22,7 +22,7 @@ const jwtStrategy = new JwtStrategy(
   options,
   async (req: Request, payload: UserPayload, done) => {
     try {
-      // Get the CORRECT Prisma client from the app's context.
+      // Get the Prisma client from the app's context.
       const prisma: PrismaClient = req.app.locals.prisma;
 
       // Now, we query the correct database (the test DB during tests).

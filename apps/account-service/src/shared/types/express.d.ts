@@ -3,7 +3,7 @@ import { User as PrismaUser } from '../../generated/prisma/index.js';
 
 declare global {
   namespace Express {
-    export interface User extends PrismaUser {}
+    export interface User extends Omit<PrismaUser, 'passwordHash' | 'roleId'> {}
 
     export interface Request {
       user?: User;
