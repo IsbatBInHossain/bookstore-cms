@@ -54,7 +54,7 @@ export const sendErrorResponse = (
     message,
   };
 
-  if (errors) {
+  if (errors && process.env.NODE_ENV === 'development') {
     response.errors = errors;
   }
 
@@ -64,9 +64,9 @@ export const sendErrorResponse = (
   }`;
 
   if (statusCode >= 500) {
-    logger.error(message);
+    logger.error(logMessage);
   } else {
-    logger.warn(message);
+    logger.warn(logMessage);
   }
 
   res.status(statusCode).json(response);
