@@ -91,6 +91,7 @@ const loginUser = async (
     },
     include: {
       profile: true,
+      role: true,
     },
   });
 
@@ -129,7 +130,7 @@ const loginUser = async (
     });
   });
 
-  const { passwordHash, ...safeUser } = user;
+  const { passwordHash, roleId, ...safeUser } = user;
 
   return { user: safeUser, tokens };
 };

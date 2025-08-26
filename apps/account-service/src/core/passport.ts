@@ -20,9 +20,11 @@ const jwtStrategy = new JwtStrategy(options, async (jwt_payload: any, done) => {
       include: { profile: true, role: true },
     });
 
+    const { passwordHash, roleId, ...safeUser } = user || {};
+
     if (user) {
       // If the user is found, call the `done` callback with the user object.
-      return done(null, user);
+      return done(null, safeUser);
     } else {
       // If the user is not found, call `done` with `false`.
       return done(null, false);
