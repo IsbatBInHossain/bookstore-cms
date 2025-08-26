@@ -158,4 +158,50 @@ describe('Authentication API', () => {
       },
     });
   });
+
+  it('should fail to log in with an incorrect password', async () => {
+    // Arrange: Create a user in the database first
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+    await testPrisma.user.create({
+      data: {
+        email: 'incorrect.test@example.com',
+        passwordHash: await hashPassword('correctpassword'),
+        roleId: customerRole!.id,
+      },
+    });
+    const userDataPayload = {
+      email: 'incorrect.test@example.com',
+      password: 'incorrectpassword',
+    };
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
+
+    // Assert
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Invalid email or password');
+  });
+
+  it('should fail to log in with a non-existent email', async () => {
+    // Arrange
+    const userDataPayload = {
+      email: 'nonexistant.test@example.com',
+      password: 'anyPassword',
+    };
+
+    // Act
+    const response = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
+
+    // Assert
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Invalid email or password');
+  });
 });
