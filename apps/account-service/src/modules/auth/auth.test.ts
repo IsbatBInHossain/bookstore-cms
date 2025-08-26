@@ -257,4 +257,36 @@ describe('Authentication API', () => {
       },
     });
   });
+
+  it('should return a 401 error for an invalid access token', async () => {
+    // Arrange: Create an user in the database first
+    const customerRole = await testPrisma.role.findUnique({
+      where: { name: 'CUSTOMER' },
+    });
+
+    await testPrisma.user.create({
+      data: {
+        email: 'invalid.token@example.com',
+        passwordHash: await hashPassword('somepassword'),
+        roleId: customerRole!.id,
+      },
+    });
+
+    const invalidAuth = 'Bearer Invalid.Token.Here';
+    // Login to get a valid token
+    await supertest(app).post('/api/v1/auth/login').send({
+      email: 'invalid.token@example.com',
+      password: 'somepassword',
+    });
+
+    // Act
+    const response = await supertest(app)
+      .get('/api/v1/users/me')
+      .set('Authorization', invalidAuth);
+
+    // Assert
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Unauthorized');
+  });
 });
