@@ -9,15 +9,12 @@ import type { Request } from 'express';
 
 const options: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  // This tells Passport to pass the entire `req` object to our callback.
   passReqToCallback: true,
-  // We still need a secretOrKeyProvider, but we can simplify it.
   secretOrKeyProvider: (request, rawJwtToken, done) => {
     done(null, process.env.JWT_ACCESS_SECRET);
   },
 };
 
-// The function signature now changes to include `req` as the first argument.
 const jwtStrategy = new JwtStrategy(
   options,
   async (req: Request, payload: UserPayload, done) => {
@@ -25,7 +22,7 @@ const jwtStrategy = new JwtStrategy(
       // Get the Prisma client from the app's context.
       const prisma: PrismaClient = req.app.locals.prisma;
 
-      // Now, we query the correct database (the test DB during tests).
+      // Fetch the user from the database using the ID from the JWT payload.
       const user = await prisma.user.findUnique({
         where: { id: payload.id },
         omit: { roleId: true, passwordHash: true },
