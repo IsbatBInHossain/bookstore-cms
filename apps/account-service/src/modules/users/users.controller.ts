@@ -23,7 +23,11 @@ const updateMe = async (req: Request, res: Response) => {
     return sendErrorResponse(res, 401, 'Unauthorized');
   }
 
-  const updatedUserData = await updateMyProfile(userId, data);
+  const updatedUserData = await updateMyProfile(
+    userId,
+    data,
+    req.app.locals.prisma
+  );
 
   return sendSuccessResponse(
     res,
