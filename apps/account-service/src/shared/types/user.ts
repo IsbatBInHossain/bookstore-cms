@@ -1,4 +1,4 @@
-export type UserResponsePayload = {
+export interface UserResponsePayload {
   id: string;
   email: string;
   role: {
@@ -9,4 +9,4 @@ export type UserResponsePayload = {
     lastName?: string | null;
     phone?: string | null;
   } | null;
-};
+}

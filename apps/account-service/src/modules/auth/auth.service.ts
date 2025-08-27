@@ -12,6 +12,17 @@ import {
   verifyRefreshTokenHash,
 } from '../../shared/utils/tokens.util.js';
 import type { PrismaClient } from '../../generated/prisma/index.js';
+import type { UserResponsePayload } from '../../shared/types/user.js';
+
+interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface LoginUserResponse {
+  user: UserResponsePayload;
+  tokens: TokenResponse;
+}
 
 /**
  * Registers a new user in the system
@@ -23,7 +34,7 @@ import type { PrismaClient } from '../../generated/prisma/index.js';
 const registerUser = async (
   userData: registerSchemaDataType,
   prisma: PrismaClient
-) => {
+): Promise<UserResponsePayload> => {
   const existingUser = await prisma.user.findUnique({
     where: {
       email: userData.email,
@@ -91,7 +102,7 @@ const registerUser = async (
 const loginUser = async (
   userData: loginSchemaDataType,
   prisma: PrismaClient
-) => {
+): Promise<LoginUserResponse> => {
   const user = await prisma.user.findUnique({
     where: {
       email: userData.email,
@@ -194,7 +205,7 @@ const logoutUser = async (
 const refreshTokens = async (
   providedRefreshToken: string,
   prisma: PrismaClient
-) => {
+): Promise<TokenResponse> => {
   logger.debug(`Provide token: ${providedRefreshToken}`);
   // Verify the JWT signature and expiry
   const decodedPayload = verifyRefreshToken(providedRefreshToken);

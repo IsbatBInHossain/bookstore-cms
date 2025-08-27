@@ -6,6 +6,7 @@ import {
 import { PrismaClient } from '../generated/prisma/index.js';
 import type { UserPayload } from '../shared/utils/tokens.util.js';
 import type { Request } from 'express';
+import type { UserResponsePayload } from '../shared/types/user.js';
 
 const options: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -23,10 +24,24 @@ const jwtStrategy = new JwtStrategy(
       const prisma: PrismaClient = req.app.locals.prisma;
 
       // Fetch the user from the database using the ID from the JWT payload.
-      const user = await prisma.user.findUnique({
+      const user: UserResponsePayload | null = await prisma.user.findUnique({
         where: { id: payload.id },
-        omit: { roleId: true, passwordHash: true },
-        include: { profile: true, role: true },
+        select: {
+          id: true,
+          email: true,
+          role: {
+            select: {
+              name: true,
+            },
+          },
+          profile: {
+            select: {
+              firstName: true,
+              lastName: true,
+              phone: true,
+            },
+          },
+        },
       });
 
       if (user) {
