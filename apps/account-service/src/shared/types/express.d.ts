@@ -1,17 +1,9 @@
+import type { Permission } from '../../generated/prisma/index.js';
+import type { UserEntityWithPermission } from './user.js';
+
 declare global {
   namespace Express {
-    export interface User {
-      id: string;
-      email: string;
-      role: {
-        name: string;
-      };
-      profile: {
-        firstName?: string | null;
-        lastName?: string | null;
-        phone?: string | null;
-      } | null;
-    }
+    export interface User extends UserEntityWithPermission {}
 
     export interface Request {
       user?: User;
