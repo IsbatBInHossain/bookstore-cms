@@ -3,7 +3,7 @@ import { authenticate } from '../../shared/middleware/auth.middleware.js';
 import { usersController } from './users.controller.js'; // You will create this
 import { wrapAsync } from '../../shared/utils/wrapAsync.js';
 import { validateRequest } from '../../shared/middleware/validation.middleware.js';
-import { updateUserSchema } from './users.validation.js';
+import { updateUserRoleSchema, updateUserSchema } from './users.validation.js';
 import { checkPermission } from '../../shared/middleware/checkPermissions.middleware.js';
 import {
   PermissionAction,
@@ -26,6 +26,14 @@ router.get(
   authenticate,
   checkPermission(PermissionAction.READ, PermissionSubject.USER),
   wrapAsync(usersController.getAllUsers)
+);
+
+router.put(
+  '/:id/role',
+  authenticate,
+  validateRequest(updateUserRoleSchema),
+  checkPermission(PermissionAction.UPDATE, PermissionSubject.USER),
+  usersController.updateRole
 );
 
 export default router;

@@ -1,4 +1,5 @@
-import type { PrismaClient } from '../../generated/prisma/index.js';
+import { ApiError } from '../../core/api-error.js';
+import type { PrismaClient, RoleName } from '../../generated/prisma/index.js';
 import type { UserEntity } from '../../shared/types/user.js';
 
 const updateMyProfile = async (
@@ -77,7 +78,51 @@ const getAllUsers = async (prisma: PrismaClient): Promise<UserEntity[]> => {
   return users;
 };
 
+const updateRole = async (
+  prisma: PrismaClient,
+  userId: string,
+  roleName: RoleName
+): Promise<UserEntity> => {
+  const role = await prisma.role.findUnique({
+    where: {
+      name: roleName,
+    },
+  });
+
+  if (!role) {
+    throw new ApiError(500, 'Database not seeded', false);
+  }
+
+  const user = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      roleId: role.id,
+    },
+    select: {
+      id: true,
+      email: true,
+      role: {
+        select: {
+          name: true,
+        },
+      },
+      profile: {
+        select: {
+          firstName: true,
+          lastName: true,
+          phone: true,
+        },
+      },
+    },
+  });
+
+  return user;
+};
+
 export const userService = {
   updateMyProfile,
   getAllUsers,
+  updateRole,
 };
