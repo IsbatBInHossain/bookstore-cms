@@ -86,6 +86,73 @@ const seedPermissions = async (prisma: PrismaClient) => {
   );
 };
 
+// Helper function to assign permissions to roles
+const seedRolePermissions = async (prisma: PrismaClient) => {
+  const rolePermissions: Record<
+    RoleName,
+    { action: PermissionAction; subject: PermissionSubject }[]
+  > = {
+    [RoleName.ADMIN]: [
+      // Admin gets all permissions
+      { action: PermissionAction.CREATE, subject: PermissionSubject.USER },
+      { action: PermissionAction.READ, subject: PermissionSubject.USER },
+      { action: PermissionAction.UPDATE, subject: PermissionSubject.USER },
+      { action: PermissionAction.DELETE, subject: PermissionSubject.USER },
+      { action: PermissionAction.CREATE, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.READ, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.UPDATE, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.DELETE, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.CREATE, subject: PermissionSubject.ORDER },
+      { action: PermissionAction.READ, subject: PermissionSubject.ORDER },
+      { action: PermissionAction.UPDATE, subject: PermissionSubject.ORDER },
+      { action: PermissionAction.DELETE, subject: PermissionSubject.ORDER },
+    ],
+    [RoleName.MANAGER]: [
+      // Manager can manage books and orders, and read users
+      { action: PermissionAction.READ, subject: PermissionSubject.USER },
+      { action: PermissionAction.CREATE, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.READ, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.UPDATE, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.DELETE, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.READ, subject: PermissionSubject.ORDER },
+      { action: PermissionAction.UPDATE, subject: PermissionSubject.ORDER },
+    ],
+    [RoleName.CUSTOMER]: [
+      // Customer can read books and manage their own orders
+      { action: PermissionAction.READ, subject: PermissionSubject.BOOK },
+      { action: PermissionAction.CREATE, subject: PermissionSubject.ORDER },
+      { action: PermissionAction.READ, subject: PermissionSubject.ORDER },
+      { action: PermissionAction.UPDATE, subject: PermissionSubject.ORDER },
+    ],
+  };
+
+  logger.info('Assigning permissions to roles...');
+  for (const roleName in rolePermissions) {
+    const role = await prisma.role.findUnique({
+      where: { name: roleName as RoleName },
+    });
+    if (!role) continue;
+
+    const permissionsToAssign = rolePermissions[roleName as RoleName];
+    for (const p of permissionsToAssign) {
+      const permission = await prisma.permission.findUnique({
+        where: { action_subject: { action: p.action, subject: p.subject } },
+      });
+      if (!permission) continue;
+
+      // Upsert to avoid creating duplicate entries
+      await prisma.rolePermission.upsert({
+        where: {
+          roleId_permissionId: { roleId: role.id, permissionId: permission.id },
+        },
+        create: { roleId: role.id, permissionId: permission.id },
+        update: {},
+      });
+    }
+  }
+  logger.info('Role-permission assignment complete.');
+};
+
 /*
  * Seed the database with initial data.
  * This function can be called in different contexts, such as during application startup or via CLI.
@@ -94,11 +161,12 @@ export const seedDatabase = async (prisma: PrismaClient) => {
   logger.info('Seeding database with provided Prisma client...');
   await seedRoles(prisma);
   await seedPermissions(prisma);
+  await seedRolePermissions(prisma);
 
   logger.info('Database seeding complete.');
 };
 
-// This main function allows us to still run `pnpm prisma db seed` manually.
+// This main function allows to still run `pnpm prisma db seed` manually.
 async function main() {
   const prisma = new PrismaClient();
   try {

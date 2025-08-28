@@ -32,6 +32,7 @@ const jwtStrategy = new JwtStrategy(
           role: {
             select: {
               name: true,
+              permissions: true,
             },
           },
           profile: {
