@@ -6,7 +6,7 @@ import {
 import { PrismaClient } from '../generated/prisma/index.js';
 import type { UserPayload } from '../shared/utils/tokens.util.js';
 import type { Request } from 'express';
-import type { UserResponsePayload } from '../shared/types/user.js';
+import type { UserEntityWithPermission } from '../shared/types/user.js';
 
 const options: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -24,26 +24,33 @@ const jwtStrategy = new JwtStrategy(
       const prisma: PrismaClient = req.app.locals.prisma;
 
       // Fetch the user from the database using the ID from the JWT payload.
-      const user: UserResponsePayload | null = await prisma.user.findUnique({
-        where: { id: payload.id },
-        select: {
-          id: true,
-          email: true,
-          role: {
-            select: {
-              name: true,
-              permissions: true,
+      const user: UserEntityWithPermission | null =
+        await prisma.user.findUnique({
+          where: { id: payload.id },
+          select: {
+            id: true,
+            email: true,
+            role: {
+              select: {
+                name: true,
+                permissions: {
+                  select: {
+                    permission: {
+                      select: { action: true, subject: true },
+                    },
+                  },
+                },
+              },
+            },
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                phone: true,
+              },
             },
           },
-          profile: {
-            select: {
-              firstName: true,
-              lastName: true,
-              phone: true,
-            },
-          },
-        },
-      });
+        });
 
       if (user) {
         return done(null, user);

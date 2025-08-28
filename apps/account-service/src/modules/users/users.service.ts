@@ -1,11 +1,11 @@
 import type { PrismaClient } from '../../generated/prisma/index.js';
-import type { UserResponsePayload } from '../../shared/types/user.js';
+import type { UserEntity } from '../../shared/types/user.js';
 
 export const updateMyProfile = async (
   userId: string,
   data: any,
   prisma: PrismaClient
-): Promise<UserResponsePayload> => {
+): Promise<UserEntity> => {
   const { firstName, lastName, phone } = data;
   // Upsert user profile
   const updatedUser = await prisma.userProfile.upsert({

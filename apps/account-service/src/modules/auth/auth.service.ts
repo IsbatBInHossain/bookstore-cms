@@ -12,7 +12,7 @@ import {
   verifyRefreshTokenHash,
 } from '../../shared/utils/tokens.util.js';
 import type { PrismaClient } from '../../generated/prisma/index.js';
-import type { UserResponsePayload } from '../../shared/types/user.js';
+import type { UserEntity } from '../../shared/types/user.js';
 
 interface TokenResponse {
   accessToken: string;
@@ -20,7 +20,7 @@ interface TokenResponse {
 }
 
 interface LoginUserResponse {
-  user: UserResponsePayload;
+  user: UserEntity;
   tokens: TokenResponse;
 }
 
@@ -34,7 +34,7 @@ interface LoginUserResponse {
 const registerUser = async (
   userData: registerSchemaDataType,
   prisma: PrismaClient
-): Promise<UserResponsePayload> => {
+): Promise<UserEntity> => {
   const existingUser = await prisma.user.findUnique({
     where: {
       email: userData.email,
