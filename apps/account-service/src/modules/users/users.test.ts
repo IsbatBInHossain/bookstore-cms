@@ -7,7 +7,6 @@ import { prisma as testPrisma } from '../../test/setup.js';
 // Helper for cleaning DB between tests
 import '../../test/utils.js';
 import { hashPassword } from '../../shared/utils/password.js';
-import e from 'express';
 import { createTestUser } from '../../test/helpers.js';
 import { RoleName } from '../../generated/prisma/index.js';
 
@@ -312,5 +311,175 @@ describe('Users API', () => {
     expect(response.status).toBe(403);
     expect(response.body.status).toBe('error');
     expect(response.body.message).toBe('Forbidden');
+  });
+
+  it('should update a user role when requested by an admin', async () => {
+    // Arrange: Create and log in an admin user to get a valid access token
+    const adminUserOptions = {
+      email: 'update.role@example.com',
+      password: 'adminpassword',
+      roleName: RoleName.ADMIN,
+    };
+
+    await createTestUser(adminUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: adminUserOptions.email,
+      password: adminUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+
+    // Create a new user to update role
+    const userOptions = {
+      email: 'update.user@example.com',
+      password: 'somepassword',
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Update',
+        lastName: 'Role',
+      },
+    };
+
+    const user = await createTestUser(userOptions, testPrisma);
+
+    // Act
+    const response = await supertest(app)
+      .put(`/api/v1/users/${user.id}/role`)
+      .set('Authorization', authToken)
+      .send({
+        role: 'manager',
+      });
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(response.body.message).toBe('Successfully updated the user role');
+    expect(response.body.data).toMatchObject({
+      id: expect.any(String),
+      email: userOptions.email,
+      role: { name: RoleName.MANAGER },
+      profile: userOptions.profile,
+    });
+  });
+
+  it('should return 400 when updating role with invalid role name', async () => {
+    // Arrange: Create and log in an admin user to get a valid access token
+    const adminUserOptions = {
+      email: 'invalid.role@example.com',
+      password: 'adminpassword',
+      roleName: RoleName.ADMIN,
+    };
+
+    await createTestUser(adminUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: adminUserOptions.email,
+      password: adminUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+
+    // Create a new user to update role
+    const userOptions = {
+      email: 'update.user@example.com',
+      password: 'somepassword',
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Update',
+        lastName: 'Role',
+      },
+    };
+
+    const user = await createTestUser(userOptions, testPrisma);
+
+    // Act
+    const response = await supertest(app)
+      .put(`/api/v1/users/${user.id}/role`)
+      .set('Authorization', authToken)
+      .send({
+        role: 'invalid_role',
+      });
+
+    // Assert
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Invalid role type');
+  });
+
+  it('should return 403 when a non-admin user tries to update a user role', async () => {
+    // Arrange: Create and login non admin user
+    const nonAdminUserOptions = {
+      email: 'non.admin@example.com',
+      password: 'nonadminpassword',
+      role: RoleName.CUSTOMER,
+    };
+
+    await createTestUser(nonAdminUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: nonAdminUserOptions.email,
+      password: nonAdminUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+
+    // Create a new user to update role
+    const userOptions = {
+      email: 'test.user@example.com',
+      password: 'somepassword',
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Non',
+        lastName: 'Admin',
+      },
+    };
+
+    const user = await createTestUser(userOptions, testPrisma);
+
+    // Act
+    const response = await supertest(app)
+      .put(`/api/v1/users/${user.id}/role`)
+      .set('Authorization', authToken)
+      .send({
+        role: 'manager',
+      });
+
+    // Assert
+    expect(response.status).toBe(403);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Forbidden');
+  });
+
+  it('should return 404 when updating role of non-existent user', async () => {
+    // Arrange: Create and log in an admin user to get a valid access token
+    const adminUserOptions = {
+      email: 'non.existing@example.com',
+      password: 'adminpassword',
+      roleName: RoleName.ADMIN,
+    };
+
+    await createTestUser(adminUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: adminUserOptions.email,
+      password: adminUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+    const invalidUserId = 'invalid-user-id';
+
+    // Act
+    const response = await supertest(app)
+      .put(`/api/v1/users/${invalidUserId}/role`)
+      .set('Authorization', authToken)
+      .send({
+        role: 'manager',
+      });
+
+    // Assert
+    expect(response.status).toBe(404);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('User with given id not found');
   });
 });
