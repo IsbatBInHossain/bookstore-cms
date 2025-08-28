@@ -67,9 +67,30 @@ model RefreshToken {
 // RBAC (Role-Based Access Control) Models
 // ----------------------------------------
 
+enum RoleName {
+  CUSTOMER
+  ADMIN
+  MANAGER
+}
+
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+}
+
+
+enum PermissionSubject {
+  BOOK
+  USER
+  ORDER
+}
+
 model Role {
   id          String   @id @default(cuid())
-  name        String   @unique // e.g., "CUSTOMER", "ADMIN", "MANAGER"
+  name        RoleName   @unique
   description String?
   createdAt   DateTime @default(now())
 
@@ -81,8 +102,8 @@ model Role {
 
 model Permission {
   id          String   @id @default(cuid())
-  action      String   // e.g., "create", "read", "update", "delete"
-  subject     String   // e.g., "book", "user", "order"
+  action      PermissionAction   // e.g., "create", "read", "update", "delete"
+  subject     PermissionSubject   // e.g., "book", "user", "order"
   description String?
   createdAt   DateTime @default(now())
 
