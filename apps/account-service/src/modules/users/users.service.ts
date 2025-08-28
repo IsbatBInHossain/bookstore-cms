@@ -83,6 +83,16 @@ const updateRole = async (
   userId: string,
   roleName: RoleName
 ): Promise<UserEntity> => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(404, 'User with given id not found');
+  }
+
   const role = await prisma.role.findUnique({
     where: {
       name: roleName,
