@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma/index.js';
+import { PrismaClient, RoleName } from '../../generated/prisma/index.js';
 import { createLogger } from '@repo/logger';
 
 const logger = createLogger({ service: 'account-service (prisma)' });
@@ -11,9 +11,12 @@ export const seedDatabase = async (prisma: PrismaClient) => {
   logger.info('Seeding database with provided Prisma client...');
 
   const roles = [
-    { name: 'CUSTOMER', description: 'Default role for new users.' },
-    { name: 'MANAGER', description: 'Can manage store-specific data...' },
-    { name: 'ADMIN', description: 'Has full access...' },
+    { name: RoleName.CUSTOMER, description: 'Default role for new users.' },
+    {
+      name: RoleName.MANAGER,
+      description: 'Can manage store-specific data...',
+    },
+    { name: RoleName.ADMIN, description: 'Has full access...' },
   ];
 
   for (const role of roles) {
