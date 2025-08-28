@@ -1,3 +1,4 @@
+import { th } from 'zod/v4/locales';
 import type { PrismaClient, RoleName } from '../generated/prisma/index.js';
 import type { UserResponsePayload } from '../shared/types/user.js';
 import { hashPassword } from '../shared/utils/password.js';
@@ -24,12 +25,7 @@ export const createTestUser = async (
   });
 
   if (existingUser) {
-    return {
-      id: existingUser.id,
-      email: existingUser.email,
-      role: { name: roleName },
-      profile: null,
-    };
+    throw new Error('A user with this email already exists.');
   }
 
   const hash = await hashPassword(password);

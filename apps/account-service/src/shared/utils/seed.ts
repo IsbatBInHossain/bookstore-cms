@@ -25,12 +25,14 @@ const seedRoles = async (prisma: PrismaClient) => {
       update: {},
       create: { name: role.name, description: role.description },
     });
-    logger.info(`Upserted role: ${role.name}`);
-    const checkRoles = await prisma.role.findMany();
-    for (let r of checkRoles) {
-      console.log(JSON.stringify(r));
-    }
   }
+  const checkRoles = await prisma.role.findMany();
+  if (checkRoles.length !== roles.length) {
+    throw new Error('Role seeding failed. Please check the logs.');
+  }
+  logger.info(
+    `Role seeding complete. Roles: ${checkRoles.map(r => r.name).join(', ')}`
+  );
 };
 
 // Helper function to seed permissions
@@ -72,10 +74,16 @@ const seedPermissions = async (prisma: PrismaClient) => {
         description: permission.description,
       },
     });
-    logger.info(
-      `Upserted permission: ${permission.action} on ${permission.subject}`
-    );
   }
+  const checkPermissions = await prisma.permission.findMany();
+  if (checkPermissions.length !== permissions.length) {
+    throw new Error('Permission seeding failed. Please check the logs.');
+  }
+  logger.info(
+    `Permission seeding complete. Permissions: ${checkPermissions
+      .map(p => `${p.action.toLowerCase()}:${p.subject.toLowerCase()}`)
+      .join(', ')}`
+  );
 };
 
 /*
