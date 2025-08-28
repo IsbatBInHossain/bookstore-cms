@@ -8,6 +8,8 @@ import { prisma as testPrisma } from '../../test/setup.js';
 import '../../test/utils.js';
 import { hashPassword } from '../../shared/utils/password.js';
 import e from 'express';
+import { createTestUser } from '../../test/helpers.js';
+import { RoleName } from '../../generated/prisma/index.js';
 
 let app: Express;
 
@@ -18,31 +20,26 @@ beforeAll(() => {
 describe('Users API', () => {
   it('should return user data for a valid access token', async () => {
     // Arrange: Create and log in a user to get a valid access token
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-    await testPrisma.$transaction(async tx => {
-      const testUser = await tx.user.create({
-        data: {
-          email: 'userprofile.test@example.com',
-          passwordHash: await hashPassword('profilepassword'),
-          roleId: customerRole!.id,
-        },
-      });
-
-      await tx.userProfile.create({
-        data: {
-          firstName: 'UserProfile',
-          lastName: 'Test',
-          userId: testUser.id,
-        },
-      });
-    });
-
-    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+    const userOptions = {
       email: 'userprofile.test@example.com',
       password: 'profilepassword',
-    });
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Logout',
+        lastName: 'Test',
+      },
+    };
+
+    await createTestUser(userOptions, testPrisma);
+
+    const userDataPayload = {
+      email: userOptions.email,
+      password: userOptions.password,
+    };
+
+    const loginResponse = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
 
     const accessToken = loginResponse.body.data.tokens.accessToken;
     const authToken = `Bearer ${accessToken}`;
@@ -57,28 +54,14 @@ describe('Users API', () => {
     expect(response.body.status).toBe('success');
     expect(response.body.data).toMatchObject({
       id: expect.any(String),
-      email: 'userprofile.test@example.com',
-      role: { name: 'CUSTOMER' },
-      profile: {
-        firstName: 'UserProfile',
-        lastName: 'Test',
-      },
+      email: userOptions.email,
+      role: { name: userOptions.roleName },
+      profile: userOptions.profile,
     });
   });
 
   it('should return a 401 error for an invalid access token', async () => {
-    // Arrange: Create an user in the database first
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-
-    await testPrisma.user.create({
-      data: {
-        email: 'invalid.token@example.com',
-        passwordHash: await hashPassword('somepassword'),
-        roleId: customerRole!.id,
-      },
-    });
+    // Arrange
 
     const invalidAuth = 'Bearer Invalid.Token.Here';
     // Login to get a valid token
@@ -156,21 +139,22 @@ describe('Users API', () => {
 
   it('should create a new profile if profile is missing', async () => {
     // Arrange: Create an user in the database first
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-
-    await testPrisma.user.create({
-      data: {
-        email: 'missing.profile@example.com',
-        passwordHash: await hashPassword('somepassword'),
-        roleId: customerRole!.id,
-      },
-    });
-    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+    const userOptions = {
       email: 'missing.profile@example.com',
-      password: 'somepassword',
-    });
+      password: 'profilepassword',
+      roleName: RoleName.CUSTOMER,
+    };
+
+    await createTestUser(userOptions, testPrisma);
+
+    const userDataPayload = {
+      email: userOptions.email,
+      password: userOptions.password,
+    };
+
+    const loginResponse = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
 
     const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
 
@@ -208,17 +192,12 @@ describe('Users API', () => {
 
   it('should return 401 when updating profile without a valid token', async () => {
     // Arrange: Create an user in the database first
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-
-    await testPrisma.user.create({
-      data: {
-        email: 'invalid.token@example.com',
-        passwordHash: await hashPassword('somepassword'),
-        roleId: customerRole!.id,
-      },
-    });
+    const userOptions = {
+      email: 'invalid.token@example.com',
+      password: 'somepassword',
+      roleName: RoleName.CUSTOMER,
+    };
+    await createTestUser(userOptions, testPrisma);
 
     const invalidToken = 'Bearer Invalid.Token.Here';
 
@@ -240,30 +219,20 @@ describe('Users API', () => {
 
   it('should return 400 when updating profile with invalid phone number', async () => {
     // Arrange: Create and log in a user to get a valid access token
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-    await testPrisma.$transaction(async tx => {
-      const testUser = await tx.user.create({
-        data: {
-          email: 'invalid.data@example.com',
-          passwordHash: await hashPassword('somepassword'),
-          roleId: customerRole!.id,
-        },
-      });
-      await tx.userProfile.create({
-        data: {
-          firstName: 'Invalid',
-          lastName: 'Data',
-          userId: testUser.id,
-        },
-      });
-    });
-
-    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
-      email: 'invalid.data@example.com',
+    const userOptions = {
+      email: 'invalid.token@example.com',
       password: 'somepassword',
-    });
+      roleName: RoleName.CUSTOMER,
+    };
+    await createTestUser(userOptions, testPrisma);
+    const userDataPayload = {
+      email: userOptions.email,
+      password: userOptions.password,
+    };
+
+    const loginResponse = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
 
     const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
 
