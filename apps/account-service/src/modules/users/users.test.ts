@@ -482,4 +482,35 @@ describe('Users API', () => {
     expect(response.body.status).toBe('error');
     expect(response.body.message).toBe('User with given id not found');
   });
+
+  it('should return 403 when updating own role', async () => {
+    // Arrange: Create and login non admin user
+    const adminUserOptions = {
+      email: 'self.update@example.com',
+      password: 'adminpassword',
+      roleName: RoleName.ADMIN,
+    };
+
+    const admin = await createTestUser(adminUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: adminUserOptions.email,
+      password: adminUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+
+    // Act
+    const response = await supertest(app)
+      .put(`/api/v1/users/${admin.id}/role`)
+      .set('Authorization', authToken)
+      .send({
+        role: 'customer',
+      });
+
+    // Assert
+    expect(response.status).toBe(403);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Changing your own role is not allowed');
+  });
 });

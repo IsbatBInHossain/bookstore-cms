@@ -1,5 +1,5 @@
 import { th } from 'zod/v4/locales';
-import type { PrismaClient, RoleName } from '../generated/prisma/index.js';
+import { RoleName, type PrismaClient } from '../generated/prisma/index.js';
 import type { UserEntity } from '../shared/types/user.js';
 import { hashPassword } from '../shared/utils/password.js';
 
@@ -18,7 +18,7 @@ export const createTestUser = async (
   user: TestUserOptions,
   prisma: PrismaClient
 ): Promise<UserEntity> => {
-  const { email, password, roleName = 'CUSTOMER', profile } = user;
+  const { email, password, roleName = RoleName.CUSTOMER, profile } = user;
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
