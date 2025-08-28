@@ -1,6 +1,7 @@
 import { ApiError } from '../../core/api-error.js';
 import type { PrismaClient, RoleName } from '../../generated/prisma/index.js';
 import type { UserEntity } from '../../shared/types/user.js';
+import type { Request } from 'express';
 
 const updateMyProfile = async (
   userId: string,
@@ -79,10 +80,11 @@ const getAllUsers = async (prisma: PrismaClient): Promise<UserEntity[]> => {
 };
 
 const updateRole = async (
-  prisma: PrismaClient,
+  req: Request,
   userId: string,
   roleName: RoleName
 ): Promise<UserEntity> => {
+  const prisma = req.app.locals.prisma;
   const existingUser = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -91,6 +93,10 @@ const updateRole = async (
 
   if (!existingUser) {
     throw new ApiError(404, 'User with given id not found');
+  }
+
+  if (existingUser.id === req.user?.id) {
+    throw new ApiError(403, 'Changing your own role is not allowed');
   }
 
   const role = await prisma.role.findUnique({

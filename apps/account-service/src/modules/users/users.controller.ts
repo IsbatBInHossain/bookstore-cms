@@ -54,7 +54,7 @@ const updateRole = async (req: Request, res: Response) => {
   }
 
   const updatedUser = await userService.updateRole(
-    req.app.locals.prisma,
+    req,
     userId || '',
     role.toUpperCase()
   );
