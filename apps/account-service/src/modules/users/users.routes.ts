@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../../shared/middleware/auth.middleware.js';
-import { usersController } from './users.controller.js'; // You will create this
+import { usersController } from './users.controller.js';
 import { wrapAsync } from '../../shared/utils/wrapAsync.js';
 import { validateRequest } from '../../shared/middleware/validation.middleware.js';
 import { updateUserRoleSchema, updateUserSchema } from './users.validation.js';
