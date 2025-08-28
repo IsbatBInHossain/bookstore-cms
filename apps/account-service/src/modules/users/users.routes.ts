@@ -4,6 +4,11 @@ import { usersController } from './users.controller.js'; // You will create this
 import { wrapAsync } from '../../shared/utils/wrapAsync.js';
 import { validateRequest } from '../../shared/middleware/validation.middleware.js';
 import { updateUserSchema } from './users.validation.js';
+import { checkPermission } from '../../shared/middleware/checkPermissions.middleware.js';
+import {
+  PermissionAction,
+  PermissionSubject,
+} from '../../generated/prisma/index.js';
 
 const router = Router();
 
@@ -14,6 +19,13 @@ router.put(
   authenticate,
   validateRequest(updateUserSchema),
   wrapAsync(usersController.updateMe)
+);
+
+router.get(
+  '/',
+  authenticate,
+  checkPermission(PermissionAction.READ, PermissionSubject.USER),
+  wrapAsync(usersController.getAllUsers)
 );
 
 export default router;
