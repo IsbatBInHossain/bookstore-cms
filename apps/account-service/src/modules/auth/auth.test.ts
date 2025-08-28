@@ -7,6 +7,8 @@ import { prisma as testPrisma } from '../../test/setup.js';
 // Helper for cleaning DB between tests
 import '../../test/utils.js';
 import { hashPassword } from '../../shared/utils/password.js';
+import { createTestUser } from '../../test/helpers.js';
+import { RoleName } from '../../generated/prisma/index.js';
 
 let app: Express;
 
@@ -102,30 +104,21 @@ describe('Authentication API', () => {
 
   it('should log in a registered user successfully and return tokens', async () => {
     // Arrange: Create a user with profile in the database first
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-    await testPrisma.$transaction(async tx => {
-      const testUser = await tx.user.create({
-        data: {
-          email: 'login.test@example.com',
-          passwordHash: await hashPassword('testpassword'),
-          roleId: customerRole!.id,
-        },
-      });
-
-      await tx.userProfile.create({
-        data: {
-          firstName: 'Login',
-          lastName: 'Test',
-          userId: testUser.id,
-        },
-      });
-    });
-
-    const userDataPayload = {
+    const userOptions = {
       email: 'login.test@example.com',
       password: 'testpassword',
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Login',
+        lastName: 'Test',
+      },
+    };
+
+    await createTestUser(userOptions, testPrisma);
+
+    const userDataPayload = {
+      email: userOptions.email,
+      password: userOptions.password,
     };
 
     // Act
@@ -140,11 +133,9 @@ describe('Authentication API', () => {
     expect(response.body.data).toMatchObject({
       user: {
         id: expect.any(String),
-        email: 'login.test@example.com',
-        profile: {
-          firstName: 'Login',
-          lastName: 'Test',
-        },
+        email: userOptions.email,
+        role: { name: userOptions.roleName },
+        profile: userOptions.profile,
       },
       tokens: {
         accessToken: expect.any(String),
@@ -155,18 +146,20 @@ describe('Authentication API', () => {
 
   it('should fail to log in with an incorrect password', async () => {
     // Arrange: Create a user in the database first
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-    await testPrisma.user.create({
-      data: {
-        email: 'incorrect.test@example.com',
-        passwordHash: await hashPassword('correctpassword'),
-        roleId: customerRole!.id,
-      },
-    });
-    const userDataPayload = {
+    const userOptions = {
       email: 'incorrect.test@example.com',
+      password: 'correctpassword',
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Incorrect',
+        lastName: 'Test',
+      },
+    };
+
+    await createTestUser(userOptions, testPrisma);
+
+    const userDataPayload = {
+      email: userOptions.email,
       password: 'incorrectpassword',
     };
 
@@ -201,28 +194,27 @@ describe('Authentication API', () => {
 
   it('should issue a new token pair for a valid refresh token', async () => {
     // Arrange: Create and log in a user to get a valid refresh token
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-    await testPrisma.$transaction(async tx => {
-      const testUser = await tx.user.create({
-        data: {
-          email: 'vaild.token@example.com',
-          passwordHash: await hashPassword('somepassword'),
-          roleId: customerRole!.id,
-        },
-      });
-
-      await tx.userProfile.create({
-        data: { firstName: 'Valid', lastName: 'Token', userId: testUser.id },
-      });
-    });
-
-    // Login to get a valid refresh token
-    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+    const userOptions = {
       email: 'vaild.token@example.com',
       password: 'somepassword',
-    });
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Valid',
+        lastName: 'Token',
+      },
+    };
+
+    await createTestUser(userOptions, testPrisma);
+
+    const userDataPayload = {
+      email: userOptions.email,
+      password: userOptions.password,
+    };
+
+    // Login to get a valid refresh token
+    const loginResponse = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
 
     const refreshToken = loginResponse.body.data.tokens.refreshToken;
 
@@ -258,28 +250,26 @@ describe('Authentication API', () => {
 
   it('should invalidate the refresh token on logout', async () => {
     // Arrange: Create and log in a user to get a valid refresh token
-    const customerRole = await testPrisma.role.findUnique({
-      where: { name: 'CUSTOMER' },
-    });
-    let testUser;
-    await testPrisma.$transaction(async tx => {
-      testUser = await tx.user.create({
-        data: {
-          email: 'logout.test@example.com',
-          passwordHash: await hashPassword('logoutpassword'),
-          roleId: customerRole!.id,
-        },
-      });
-
-      await tx.userProfile.create({
-        data: { firstName: 'Logout', lastName: 'Test', userId: testUser.id },
-      });
-    });
-
-    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+    const userOptions = {
       email: 'logout.test@example.com',
       password: 'logoutpassword',
-    });
+      roleName: RoleName.CUSTOMER,
+      profile: {
+        firstName: 'Logout',
+        lastName: 'Test',
+      },
+    };
+
+    const testUser = await createTestUser(userOptions, testPrisma);
+
+    const userDataPayload = {
+      email: userOptions.email,
+      password: userOptions.password,
+    };
+
+    const loginResponse = await supertest(app)
+      .post('/api/v1/auth/login')
+      .send(userDataPayload);
 
     const refreshToken = loginResponse.body.data.tokens.refreshToken;
 
