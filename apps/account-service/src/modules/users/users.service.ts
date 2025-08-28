@@ -1,7 +1,7 @@
 import type { PrismaClient } from '../../generated/prisma/index.js';
 import type { UserEntity } from '../../shared/types/user.js';
 
-export const updateMyProfile = async (
+const updateMyProfile = async (
   userId: string,
   data: any,
   prisma: PrismaClient
@@ -51,4 +51,33 @@ export const updateMyProfile = async (
     },
   };
   return updatedUserResponse;
+};
+
+const getAllUsers = async (prisma: PrismaClient): Promise<UserEntity[]> => {
+  // Fetch all users with profilse and roles
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      role: {
+        select: {
+          name: true,
+        },
+      },
+      profile: {
+        select: {
+          firstName: true,
+          lastName: true,
+          phone: true,
+        },
+      },
+    },
+  });
+
+  return users;
+};
+
+export const userService = {
+  updateMyProfile,
+  getAllUsers,
 };
