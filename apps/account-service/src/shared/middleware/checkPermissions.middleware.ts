@@ -11,12 +11,7 @@ export const checkPermission =
     const user = req.user;
 
     if (!user) {
-      return next(
-        new ApiError(
-          403,
-          'Forbidden: You do not have the required permissions to perform this action.'
-        )
-      );
+      return next(new ApiError(401, 'Unauthorized'));
     }
 
     const hasPermission = user.role.permissions.some(
@@ -24,7 +19,7 @@ export const checkPermission =
     );
 
     if (!hasPermission) {
-      return next(new ApiError(403, 'Forbidden: Insufficient permissions.'));
+      return next(new ApiError(403, 'Forbidden'));
     }
 
     next();

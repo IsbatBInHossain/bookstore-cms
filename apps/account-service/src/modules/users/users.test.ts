@@ -250,4 +250,67 @@ describe('Users API', () => {
     expect(response.body.status).toBe('error');
     expect(response.body.message).toBe('Validation failed');
   });
+
+  it('should fetch all users for admin user', async () => {
+    // Arrange: Create and log in an admin user to get a valid access token
+    const adminUserOptions = {
+      email: 'fetch.users@example.com',
+      password: 'adminpassword',
+      roleName: RoleName.ADMIN,
+    };
+
+    await createTestUser(adminUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: adminUserOptions.email,
+      password: adminUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+
+    // Act
+    const response = await supertest(app)
+      .get('/api/v1/users')
+      .set('Authorization', authToken);
+
+    // Assert
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('success');
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data).toMatchObject([
+      {
+        id: expect.any(String),
+        email: adminUserOptions.email,
+        role: { name: adminUserOptions.roleName },
+      },
+    ]);
+  });
+
+  it('should return 403 when a non-admin user tries to fetch all users', async () => {
+    // Arrange: Create and log in a non-admin user to get a valid access token
+    const customerUserOptions = {
+      email: 'nonadmin.user@example.com',
+      password: 'userpassword',
+      roleName: RoleName.CUSTOMER,
+    };
+
+    await createTestUser(customerUserOptions, testPrisma);
+
+    const loginResponse = await supertest(app).post('/api/v1/auth/login').send({
+      email: customerUserOptions.email,
+      password: customerUserOptions.password,
+    });
+
+    const authToken = `Bearer ${loginResponse.body.data.tokens.accessToken}`;
+
+    // Act
+    const response = await supertest(app)
+      .get('/api/v1/users')
+      .set('Authorization', authToken);
+
+    // Assert
+    expect(response.status).toBe(403);
+    expect(response.body.status).toBe('error');
+    expect(response.body.message).toBe('Forbidden');
+  });
 });
