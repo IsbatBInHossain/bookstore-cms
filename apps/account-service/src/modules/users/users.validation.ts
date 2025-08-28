@@ -17,3 +17,12 @@ export const updateUserSchema = z.object({
 
 export type updateUserSchemaType = z.infer<typeof updateUserSchema>;
 export type updateUserSchemaDataType = z.infer<typeof updateUserSchema>['body'];
+
+export const updateUserRoleSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: z.object({
+    role: z.string(),
+  }),
+});
