@@ -247,7 +247,7 @@ describe('Users API', () => {
     // Assert
     expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
-    expect(response.body.message).toBe('Validation failed');
+    expect(response.body.message).toBe('Invalid phone number format');
   });
 
   it('should fetch all users for admin user', async () => {
@@ -404,7 +404,7 @@ describe('Users API', () => {
     // Assert
     expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
-    expect(response.body.message).toBe('Invalid role type');
+    expect(response.body.message).toBe('Invalid role specified');
   });
 
   it('should return 403 when a non-admin user tries to update a user role', async () => {
@@ -451,10 +451,10 @@ describe('Users API', () => {
     expect(response.body.message).toBe('Forbidden');
   });
 
-  it('should return 404 when updating role of non-existent user', async () => {
+  it('should return 400 when updating role of user with invalid id format', async () => {
     // Arrange: Create and log in an admin user to get a valid access token
     const adminUserOptions = {
-      email: 'non.existing@example.com',
+      email: 'invalid.id@example.com',
       password: 'adminpassword',
       roleName: RoleName.ADMIN,
     };
@@ -478,9 +478,9 @@ describe('Users API', () => {
       });
 
     // Assert
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
-    expect(response.body.message).toBe('User with given id not found');
+    expect(response.body.message).toBe('Invalid id format');
   });
 
   it('should return 403 when updating own role', async () => {

@@ -33,7 +33,7 @@ router.put(
   authenticate,
   validateRequest(updateUserRoleSchema),
   checkPermission(PermissionAction.UPDATE, PermissionSubject.USER),
-  usersController.updateRole
+  wrapAsync(usersController.updateRole)
 );
 
 export default router;
