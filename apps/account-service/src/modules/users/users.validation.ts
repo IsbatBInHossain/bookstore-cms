@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RoleName } from '../../generated/prisma/index.js';
 
 // Update User
 export const updateUserSchema = z.object({
@@ -20,9 +21,14 @@ export type updateUserSchemaDataType = z.infer<typeof updateUserSchema>['body'];
 
 export const updateUserRoleSchema = z.object({
   params: z.object({
-    id: z.string(),
+    id: z.string().cuid('Invalid id format'),
   }),
   body: z.object({
-    role: z.string(),
+    role: z.preprocess(
+      val => (typeof val === 'string' ? val.toUpperCase() : val),
+      z.nativeEnum(RoleName, {
+        errorMap: () => ({ message: 'Invalid role specified' }),
+      })
+    ),
   }),
 });

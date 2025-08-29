@@ -99,7 +99,7 @@ describe('Authentication API', () => {
     // Assert
     expect(response.status).toBe(400);
     expect(response.body.status).toBe('error');
-    expect(response.body.message).toContain('Validation failed');
+    expect(response.body.message).toContain('Passwords do not match');
   });
 
   it('should log in a registered user successfully and return tokens', async () => {

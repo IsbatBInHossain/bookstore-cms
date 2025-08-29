@@ -20,9 +20,6 @@ const getMe = (req: Request, res: Response) => {
 const updateMe = async (req: Request, res: Response) => {
   const data = req.body;
   const userId = req.user?.id;
-  if (!userId) {
-    return sendErrorResponse(res, 401, 'Unauthorized');
-  }
 
   const updatedUserData = await userService.updateMyProfile(
     userId,

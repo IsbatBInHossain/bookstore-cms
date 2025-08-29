@@ -23,7 +23,15 @@ export const validateRequest =
           field: e.path.join('.'),
           message: e.message,
         }));
-        const error = new ApiError(400, 'Validation failed', true);
+        let errorMessage;
+        if (formattedErrors.length > 0) {
+          errorMessage = formattedErrors[0]?.message;
+        }
+        const error = new ApiError(
+          400,
+          errorMessage || 'Validation failed',
+          true
+        );
         // Attach the detailed errors to the error object for the handler to use
         (error as any).errors = formattedErrors;
         next(error);
