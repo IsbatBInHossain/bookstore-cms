@@ -80,50 +80,43 @@ const getAllUsers = async (prisma: PrismaClient): Promise<UserEntity[]> => {
 };
 
 const updateRole = async (
-  req: Request,
   userId: string,
-  roleName: RoleName
+  roleName: RoleName,
+  actingUserId: string,
+  prisma: PrismaClient
 ): Promise<UserEntity> => {
-  const prisma = req.app.locals.prisma;
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
+  // Find the target user
+  const userToBeUpdated = await prisma.user.findUnique({
+    where: { id: userId },
   });
 
-  if (!existingUser) {
+  if (!userToBeUpdated) {
     throw new ApiError(404, 'User with given id not found');
   }
 
-  if (existingUser.id === req.user?.id) {
+  // Prevent users from changing their own role
+  if (userToBeUpdated.id === actingUserId) {
     throw new ApiError(403, 'Changing your own role is not allowed');
   }
 
+  // Ensure the requested role exists in DB
   const role = await prisma.role.findUnique({
-    where: {
-      name: roleName,
-    },
+    where: { name: roleName },
   });
 
   if (!role) {
+    // Should only happen if roles table was never seeded
     throw new ApiError(500, 'Database not seeded', false);
   }
 
+  // Update the user’s role and return minimal public fields
   const user = await prisma.user.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      roleId: role.id,
-    },
+    where: { id: userId },
+    data: { roleId: role.id },
     select: {
       id: true,
       email: true,
-      role: {
-        select: {
-          name: true,
-        },
-      },
+      role: { select: { name: true } },
       profile: {
         select: {
           firstName: true,
