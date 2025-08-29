@@ -1,10 +1,6 @@
 import type { Request, Response } from 'express';
-import {
-  sendErrorResponse,
-  sendSuccessResponse,
-} from '../../shared/handlers/response.handler.js';
+import { sendSuccessResponse } from '../../shared/handlers/response.handler.js';
 import { userService } from './users.service.js';
-import { RoleName } from '../../generated/prisma/index.js';
 
 const getMe = (req: Request, res: Response) => {
   const user = req.user!;
@@ -41,19 +37,15 @@ const getAllUsers = async (req: Request, res: Response) => {
 };
 
 const updateRole = async (req: Request, res: Response) => {
-  const userId = req.params.id;
+  const userId = req.params.id!;
   const { role } = req.body;
-
-  const roleSet = new Set(Object.values(RoleName));
-
-  if (!role || !roleSet.has(role.toUpperCase() as RoleName)) {
-    return sendErrorResponse(res, 400, 'Invalid role type');
-  }
+  const actingUserId = req.user?.id;
 
   const updatedUser = await userService.updateRole(
-    req,
-    userId || '',
-    role.toUpperCase()
+    userId,
+    role,
+    actingUserId,
+    req.app.locals.prisma
   );
 
   return sendSuccessResponse(
